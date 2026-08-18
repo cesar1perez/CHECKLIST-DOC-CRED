@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist de Expediente - Clientes Mayoreo</title>
+<style>
+  :root{
+    --azul:#1f4e78;
+    --azul-claro:#d9e6f2;
+    --verde:#2e7d32;
+    --rojo:#c62828;
+    --gris:#f4f6f8;
+    --borde:#c9d2da;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:'Segoe UI', Arial, sans-serif;
+    background:var(--gris);
+    margin:0;
+    padding:20px;
+    color:#222;
+  }
+  .contenedor{
+    max-width:640px;
+    margin:0 auto;
+    background:#fff;
+    border-radius:10px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+    overflow:hidden;
+  }
+  .encabezado{
+    background:var(--azul);
+    color:#fff;
+    padding:18px 20px;
+  }
+  .encabezado h1{
+    margin:0;
+    font-size:19px;
+  }
+  .encabezado p{
+    margin:4px 0 0;
+    font-size:13px;
+    opacity:0.85;
+  }
+  .cuerpo{
+    padding:20px;
+  }
+  label{
+    display:block;
+    font-weight:600;
+    font-size:13px;
+    margin-bottom:6px;
+    color:var(--azul);
+  }
+  select, input[type=file]{
+    width:100%;
+    padding:10px;
+    border:1px solid var(--borde);
+    border-radius:6px;
+    font-size:14px;
+    margin-bottom:16px;
+    background:#fff;
+  }
+  .info-cliente{
+    background:var(--azul-claro);
+    border-radius:6px;
+    padding:10px 14px;
+    margin-bottom:16px;
+    font-size:14px;
+    display:none;
+  }
+  .checklist{
+    border:1px solid var(--borde);
+    border-radius:8px;
+    overflow:hidden;
+    margin-bottom:18px;
+  }
+  .item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 14px;
+    border-bottom:1px solid var(--borde);
+    background:#fff;
+  }
+  .item:last-child{border-bottom:none;}
+  .item:nth-child(even){background:#fafbfc;}
+  .item span{font-size:14px;}
+  .switch{
+    position:relative;
+    width:46px;
+    height:24px;
+    flex-shrink:0;
+  }
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{
+    position:absolute;
+    cursor:pointer;
+    top:0;left:0;right:0;bottom:0;
+    background:#ccc;
+    border-radius:24px;
+    transition:.2s;
+  }
+  .slider:before{
+    position:absolute;
+    content:"";
+    height:18px;width:18px;
+    left:3px;bottom:3px;
+    background:#fff;
+    border-radius:50%;
+    transition:.2s;
+  }
+  input:checked + .slider{background:var(--verde);}
+  input:checked + .slider:before{transform:translateX(22px);}
+  .barra-progreso{
+    height:8px;
+    background:#e0e0e0;
+    border-radius:4px;
+    overflow:hidden;
+    margin-bottom:18px;
+  }
+  .barra-progreso div{
+    height:100%;
+    background:var(--verde);
+    width:0%;
+    transition:width .3s;
+  }
+  button{
+    width:100%;
+    padding:13px;
+    background:var(--azul);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  button:disabled{background:#9aa7b1;cursor:not-allowed;}
+  button:hover:not(:disabled){background:#163a5c;}
+  .mensaje{
+    margin-top:14px;
+    padding:10px 14px;
+    border-radius:6px;
+    font-size:14px;
+    display:none;
+  }
+  .mensaje.exito{background:#e6f4ea;color:var(--verde);display:block;}
+  .mensaje.error{background:#fdecea;color:var(--rojo);display:block;}
+  .previa-foto{
+    margin-top:8px;
+    max-width:100%;
+    max-height:180px;
+    border-radius:6px;
+    display:none;
+  }
+  .cargando{
+    display:none;
+    text-align:center;
+    font-size:13px;
+    color:#666;
+    margin-bottom:10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="contenedor">
+  <div class="encabezado">
+    <h1>Checklist de Expediente</h1>
+    <p>Clientes de Mayoreo — Documentación para crédito</p>
+  </div>
+
+  <div class="cuerpo">
+
+    <label for="selectorCliente">Selecciona el cliente</label>
+    <select id="selectorCliente">
+      <option value="">Cargando lista de clientes...</option>
+    </select>
+
+    <div class="info-cliente" id="infoCliente"></div>
+
+    <div class="checklist" id="checklist"></div>
+
+    <div class="barra-progreso"><div id="progreso"></div></div>
+
+    <label for="fotoEvidencia">Foto de evidencia (fachada / expediente)</label>
+    <input type="file" id="fotoEvidencia" accept="image/*" capture="environment">
+    <img id="previaFoto" class="previa-foto">
+
+    <div class="cargando" id="cargando">Guardando información...</div>
+
+    <button id="btnGuardar" disabled>Guardar checklist</button>
+
+    <div class="mensaje" id="mensaje"></div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIGURACIÓN — edita estas dos líneas antes de publicar
+   ===================================================================== */
+// URL del CSV publicado de Google Sheets (pestaña con CODIGO y NOMBRE de cliente)
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwFNeIOM5_f8GaTijB6q_NNwoWc1DXdwcu0jhSQM3LD9Zk9EIwsurrRQ_E9QrGxWOXGADXUh3SLnIf/pub?output=csv";
+
+// URL del Web App de Google Apps Script (la obtienes al desplegar Code.gs — ver guía)
+const APPS_SCRIPT_URL = "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT";
+/* ===================================================================== */
+
+const REQUISITOS = [
+  "PAGARE",
+  "AVAL",
+  "INE AVAL",
+  "INE",
+  "CONSTANCIA FISCAL",
+  "COMPROBANTE DE DOMICILIO",
+  "FIRMAS DE AUTORIZACION",
+  "LIBROS DE RUTA"
+];
+// FOTO DE FACHADA se cubre con el campo de subir foto, no como switch
+
+let clientes = [];
+
+const selectorCliente = document.getElementById('selectorCliente');
+const infoCliente = document.getElementById('infoCliente');
+const checklistDiv = document.getElementById('checklist');
+const progreso = document.getElementById('progreso');
+const btnGuardar = document.getElementById('btnGuardar');
+const mensaje = document.getElementById('mensaje');
+const fotoInput = document.getElementById('fotoEvidencia');
+const previaFoto = document.getElementById('previaFoto');
+const cargando = document.getElementById('cargando');
+
+function parseCSV(texto){
+  const filas = texto.trim().split(/\r?\n/).map(f => {
+    // manejo simple de CSV con comas dentro de comillas
+    const resultado = [];
+    let actual = '';
+    let comillas = false;
+    for(let i=0;i<f.length;i++){
+      const c = f[i];
+      if(c === '"'){ comillas = !comillas; }
+      else if(c === ',' && !comillas){ resultado.push(actual); actual=''; }
+      else { actual += c; }
+    }
+    resultado.push(actual);
+    return resultado.map(x => x.trim());
+  });
+  return filas;
+}
+
+function normaliza(txt){
+  return (txt||'').toString().trim().toUpperCase();
+}
+
+async function cargarClientes(){
+  try{
+    const resp = await fetch(CSV_URL + '&t=' + Date.now());
+    const texto = await resp.text();
+    const filas = parseCSV(texto);
+    const encabezado = filas[0].map(normaliza);
+    const idxCodigo = encabezado.indexOf('CODIGO DE CLIENTE');
+    const idxNombre = encabezado.indexOf('NOMBRE DE CLIENTE');
+
+    if(idxCodigo === -1 || idxNombre === -1){
+      throw new Error('No se encontraron las columnas CODIGO DE CLIENTE / NOMBRE DE CLIENTE en el Sheet.');
+    }
+
+    clientes = filas.slice(1)
+      .filter(f => f[idxCodigo] && f[idxNombre])
+      .map(f => ({ codigo: f[idxCodigo], nombre: f[idxNombre] }));
+
+    selectorCliente.innerHTML = '<option value="">-- Selecciona un cliente --</option>' +
+      clientes.map(c => `<option value="${c.codigo}">${c.codigo} - ${c.nombre}</option>`).join('');
+
+  }catch(err){
+    selectorCliente.innerHTML = '<option value="">Error al cargar clientes</option>';
+    mostrarMensaje('No se pudo cargar la lista de clientes: ' + err.message, 'error');
+  }
+}
+
+function construirChecklist(){
+  checklistDiv.innerHTML = REQUISITOS.map((req, i) => `
+    <div class="item">
+      <span>${req}</span>
+      <label class="switch">
+        <input type="checkbox" class="reqCheck" data-req="${req}" id="chk${i}">
+        <span class="slider"></span>
+      </label>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.reqCheck').forEach(chk => {
+    chk.addEventListener('change', actualizarProgreso);
+  });
+  actualizarProgreso();
+}
+
+function actualizarProgreso(){
+  const checks = document.querySelectorAll('.reqCheck');
+  const marcados = document.querySelectorAll('.reqCheck:checked').length;
+  const pct = checks.length ? Math.round((marcados/checks.length)*100) : 0;
+  progreso.style.width = pct + '%';
+  validarFormulario();
+}
+
+function validarFormulario(){
+  btnGuardar.disabled = !selectorCliente.value;
+}
+
+selectorCliente.addEventListener('change', () => {
+  const c = clientes.find(x => x.codigo === selectorCliente.value);
+  if(c){
+    infoCliente.style.display = 'block';
+    infoCliente.innerHTML = `<strong>${c.codigo}</strong> — ${c.nombre}`;
+  }else{
+    infoCliente.style.display = 'none';
+  }
+  construirChecklist();
+});
+
+fotoInput.addEventListener('change', () => {
+  const archivo = fotoInput.files[0];
+  if(archivo){
+    const lector = new FileReader();
+    lector.onload = e => {
+      previaFoto.src = e.target.result;
+      previaFoto.style.display = 'block';
+    };
+    lector.readAsDataURL(archivo);
+  }
+});
+
+function mostrarMensaje(texto, tipo){
+  mensaje.textContent = texto;
+  mensaje.className = 'mensaje ' + tipo;
+}
+
+function archivoABase64(archivo){
+  return new Promise((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onload = () => resolve(lector.result.split(',')[1]); // solo el base64
+    lector.onerror = reject;
+    lector.readAsDataURL(archivo);
+  });
+}
+
+btnGuardar.addEventListener('click', async () => {
+  if(APPS_SCRIPT_URL.includes('PEGA_AQUI')){
+    mostrarMensaje('Falta configurar la URL de Apps Script en el archivo HTML (APPS_SCRIPT_URL).', 'error');
+    return;
+  }
+
+  const c = clientes.find(x => x.codigo === selectorCliente.value);
+  if(!c) return;
+
+  const datos = {
+    codigo: c.codigo,
+    nombre: c.nombre,
+    fecha: new Date().toISOString(),
+    requisitos: {}
+  };
+  document.querySelectorAll('.reqCheck').forEach(chk => {
+    datos.requisitos[chk.dataset.req] = chk.checked;
+  });
+
+  const archivoFoto = fotoInput.files[0];
+  if(archivoFoto){
+    datos.fotoBase64 = await archivoABase64(archivoFoto);
+    datos.fotoNombre = `${c.codigo}_${Date.now()}_${archivoFoto.name}`;
+    datos.fotoTipo = archivoFoto.type;
+  }
+
+  btnGuardar.disabled = true;
+  cargando.style.display = 'block';
+  mensaje.style.display = 'none';
+
+  try{
+    const resp = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS
+      body: JSON.stringify(datos)
+    });
+    const resultado = await resp.json();
+
+    if(resultado.ok){
+      mostrarMensaje('Checklist guardado correctamente para ' + c.nombre + '.', 'exito');
+      fotoInput.value = '';
+      previaFoto.style.display = 'none';
+    }else{
+      throw new Error(resultado.error || 'Error desconocido en el servidor.');
+    }
+  }catch(err){
+    mostrarMensaje('Error al guardar: ' + err.message, 'error');
+  }finally{
+    cargando.style.display = 'none';
+    btnGuardar.disabled = false;
+  }
+});
+
+cargarClientes();
+</script>
+
+</body>
+</html>
