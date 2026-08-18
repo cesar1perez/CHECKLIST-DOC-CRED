@@ -3,165 +3,105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Checklist de Expediente - Clientes Mayoreo</title>
+<title>Checklist de Expediente — Clientes Mayoreo</title>
 <style>
   :root{
     --azul:#1f4e78;
     --azul-claro:#d9e6f2;
     --verde:#2e7d32;
+    --verde-suave:#e6f4ea;
     --rojo:#c62828;
-    --gris:#f4f6f8;
-    --borde:#c9d2da;
+    --gris:#eef1f4;
+    --borde:#cfd8e0;
+    --texto:#243746;
   }
   *{box-sizing:border-box;}
   body{
     font-family:'Segoe UI', Arial, sans-serif;
     background:var(--gris);
     margin:0;
-    padding:20px;
-    color:#222;
+    padding:16px;
+    color:var(--texto);
   }
   .contenedor{
-    max-width:640px;
+    max-width:700px;
     margin:0 auto;
     background:#fff;
-    border-radius:10px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+    border-radius:12px;
+    box-shadow:0 2px 14px rgba(0,0,0,0.08);
     overflow:hidden;
   }
-  .encabezado{
-    background:var(--azul);
-    color:#fff;
-    padding:18px 20px;
+  .encabezado{ background:var(--azul); color:#fff; padding:18px 20px; }
+  .encabezado h1{ margin:0; font-size:19px; }
+  .encabezado p{ margin:4px 0 0; font-size:13px; opacity:.85; }
+  .cuerpo{ padding:20px; }
+
+  label.campo{ display:block; font-weight:600; font-size:12.5px; margin-bottom:6px; color:var(--azul); text-transform:uppercase; letter-spacing:.3px; }
+  select, input[type=text]{
+    width:100%; padding:11px; border:1px solid var(--borde); border-radius:7px;
+    font-size:14px; margin-bottom:14px; background:#fff; font-family:inherit;
   }
-  .encabezado h1{
-    margin:0;
-    font-size:19px;
+
+  .ficha{
+    display:none; background:var(--azul-claro); border-radius:8px;
+    padding:12px 14px; margin-bottom:18px; font-size:14px;
   }
-  .encabezado p{
-    margin:4px 0 0;
-    font-size:13px;
-    opacity:0.85;
+  .ficha .linea{ display:flex; justify-content:space-between; padding:3px 0; }
+  .ficha .etiqueta{ font-weight:600; color:var(--azul); font-size:12px; text-transform:uppercase; }
+
+  .resumen{ display:none; align-items:center; gap:10px; margin-bottom:14px; font-size:13px; color:#5a6b7a; }
+  .barra{ flex:1; height:8px; background:#dde3e9; border-radius:4px; overflow:hidden; }
+  .barra div{ height:100%; width:0%; background:var(--verde); transition:width .3s; }
+
+  .concepto{
+    border:1px solid var(--borde); border-radius:9px; margin-bottom:10px; overflow:hidden; background:#fff;
   }
-  .cuerpo{
-    padding:20px;
+  .concepto.completo{ border-color:var(--verde); background:var(--verde-suave); }
+  .concepto-cabecera{
+    display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; user-select:none;
   }
-  label{
-    display:block;
-    font-weight:600;
-    font-size:13px;
-    margin-bottom:6px;
-    color:var(--azul);
+  .palomita{
+    width:24px; height:24px; border-radius:50%; border:2px solid var(--borde);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    font-size:14px; font-weight:700; color:transparent; background:#fff; transition:.2s;
   }
-  select, input[type=file]{
-    width:100%;
-    padding:10px;
-    border:1px solid var(--borde);
-    border-radius:6px;
-    font-size:14px;
-    margin-bottom:16px;
-    background:#fff;
+  .concepto.completo .palomita{ background:var(--verde); border-color:var(--verde); color:#fff; }
+  .concepto-titulo{ flex:1; font-size:14px; font-weight:600; }
+  .flecha{ font-size:12px; color:#8a99a8; transition:transform .2s; }
+  .concepto.abierto .flecha{ transform:rotate(90deg); }
+  .insignia{ font-size:11px; padding:2px 8px; border-radius:10px; background:#dde3e9; color:#5a6b7a; }
+  .concepto.completo .insignia{ background:var(--verde); color:#fff; }
+
+  .concepto-detalle{ display:none; padding:0 14px 14px; border-top:1px dashed var(--borde); }
+  .concepto.abierto .concepto-detalle{ display:block; }
+  .concepto-detalle textarea{
+    width:100%; min-height:60px; padding:9px; border:1px solid var(--borde);
+    border-radius:6px; font-size:13.5px; font-family:inherit; resize:vertical; margin-top:10px;
   }
-  .info-cliente{
-    background:var(--azul-claro);
-    border-radius:6px;
-    padding:10px 14px;
-    margin-bottom:16px;
-    font-size:14px;
-    display:none;
+  .fila-archivo{ display:flex; align-items:center; gap:10px; margin-top:9px; flex-wrap:wrap; }
+  .btn-foto{
+    display:inline-block; padding:8px 14px; background:#fff; border:1px solid var(--azul);
+    color:var(--azul); border-radius:6px; font-size:13px; cursor:pointer; font-weight:600;
   }
-  .checklist{
-    border:1px solid var(--borde);
-    border-radius:8px;
-    overflow:hidden;
-    margin-bottom:18px;
+  .btn-foto:hover{ background:var(--azul-claro); }
+  .concepto-detalle input[type=file]{ display:none; }
+  .nombre-archivo{ font-size:12px; color:#5a6b7a; }
+  .previa{ max-height:120px; border-radius:6px; margin-top:8px; display:none; }
+  .link-previo{ font-size:12px; margin-top:8px; display:block; color:var(--azul); }
+
+  .pie{ margin-top:18px; }
+  button.principal{
+    width:100%; padding:14px; background:var(--azul); color:#fff; border:none;
+    border-radius:9px; font-size:15px; font-weight:600; cursor:pointer;
   }
-  .item{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:12px 14px;
-    border-bottom:1px solid var(--borde);
-    background:#fff;
-  }
-  .item:last-child{border-bottom:none;}
-  .item:nth-child(even){background:#fafbfc;}
-  .item span{font-size:14px;}
-  .switch{
-    position:relative;
-    width:46px;
-    height:24px;
-    flex-shrink:0;
-  }
-  .switch input{opacity:0;width:0;height:0;}
-  .slider{
-    position:absolute;
-    cursor:pointer;
-    top:0;left:0;right:0;bottom:0;
-    background:#ccc;
-    border-radius:24px;
-    transition:.2s;
-  }
-  .slider:before{
-    position:absolute;
-    content:"";
-    height:18px;width:18px;
-    left:3px;bottom:3px;
-    background:#fff;
-    border-radius:50%;
-    transition:.2s;
-  }
-  input:checked + .slider{background:var(--verde);}
-  input:checked + .slider:before{transform:translateX(22px);}
-  .barra-progreso{
-    height:8px;
-    background:#e0e0e0;
-    border-radius:4px;
-    overflow:hidden;
-    margin-bottom:18px;
-  }
-  .barra-progreso div{
-    height:100%;
-    background:var(--verde);
-    width:0%;
-    transition:width .3s;
-  }
-  button{
-    width:100%;
-    padding:13px;
-    background:var(--azul);
-    color:#fff;
-    border:none;
-    border-radius:8px;
-    font-size:15px;
-    font-weight:600;
-    cursor:pointer;
-  }
-  button:disabled{background:#9aa7b1;cursor:not-allowed;}
-  button:hover:not(:disabled){background:#163a5c;}
-  .mensaje{
-    margin-top:14px;
-    padding:10px 14px;
-    border-radius:6px;
-    font-size:14px;
-    display:none;
-  }
-  .mensaje.exito{background:#e6f4ea;color:var(--verde);display:block;}
-  .mensaje.error{background:#fdecea;color:var(--rojo);display:block;}
-  .previa-foto{
-    margin-top:8px;
-    max-width:100%;
-    max-height:180px;
-    border-radius:6px;
-    display:none;
-  }
-  .cargando{
-    display:none;
-    text-align:center;
-    font-size:13px;
-    color:#666;
-    margin-bottom:10px;
-  }
+  button.principal:disabled{ background:#9aa7b1; cursor:not-allowed; }
+  button.principal:hover:not(:disabled){ background:#163a5c; }
+
+  .mensaje{ margin-top:14px; padding:11px 14px; border-radius:7px; font-size:14px; display:none; }
+  .mensaje.exito{ background:var(--verde-suave); color:var(--verde); display:block; }
+  .mensaje.error{ background:#fdecea; color:var(--rojo); display:block; }
+  .mensaje.aviso{ background:#fff8e1; color:#8a6d00; display:block; }
+  .cargando{ display:none; text-align:center; font-size:13px; color:#5a6b7a; margin-bottom:10px; }
 </style>
 </head>
 <body>
@@ -169,46 +109,47 @@
 <div class="contenedor">
   <div class="encabezado">
     <h1>Checklist de Expediente</h1>
-    <p>Clientes de Mayoreo — Documentación para crédito</p>
+    <p>Clientes de Mayoreo — Documentación para condición de venta / crédito</p>
   </div>
 
   <div class="cuerpo">
 
-    <label for="selectorCliente">Selecciona el cliente</label>
-    <select id="selectorCliente">
-      <option value="">Cargando lista de clientes...</option>
-    </select>
+    <label class="campo" for="capturadoPor">Quién captura</label>
+    <input type="text" id="capturadoPor" placeholder="Tu nombre" autocomplete="name">
 
-    <div class="info-cliente" id="infoCliente"></div>
+    <label class="campo" for="filtroVendedor">Filtrar por vendedor</label>
+    <select id="filtroVendedor"><option value="">Todos los vendedores</option></select>
 
-    <div class="checklist" id="checklist"></div>
+    <label class="campo" for="selectorCliente">Cliente</label>
+    <select id="selectorCliente"><option value="">Cargando clientes...</option></select>
 
-    <div class="barra-progreso"><div id="progreso"></div></div>
+    <div class="ficha" id="ficha"></div>
 
-    <label for="fotoEvidencia">Foto de evidencia (fachada / expediente)</label>
-    <input type="file" id="fotoEvidencia" accept="image/*" capture="environment">
-    <img id="previaFoto" class="previa-foto">
+    <div class="resumen" id="resumen">
+      <span id="textoResumen">0 de 9</span>
+      <div class="barra"><div id="barraProgreso"></div></div>
+    </div>
 
-    <div class="cargando" id="cargando">Guardando información...</div>
+    <div id="listaConceptos"></div>
 
-    <button id="btnGuardar" disabled>Guardar checklist</button>
+    <div class="pie">
+      <div class="cargando" id="cargando">Guardando y subiendo evidencias...</div>
+      <button class="principal" id="btnGuardar" disabled>Guardar checklist</button>
+      <div class="mensaje" id="mensaje"></div>
+    </div>
 
-    <div class="mensaje" id="mensaje"></div>
   </div>
 </div>
 
 <script>
 /* =====================================================================
-   CONFIGURACIÓN — edita estas dos líneas antes de publicar
+   CONFIGURACIÓN
    ===================================================================== */
-// URL del CSV publicado de Google Sheets (pestaña con CODIGO y NOMBRE de cliente)
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwFNeIOM5_f8GaTijB6q_NNwoWc1DXdwcu0jhSQM3LD9Zk9EIwsurrRQ_E9QrGxWOXGADXUh3SLnIf/pub?output=csv";
-
-// URL del Web App de Google Apps Script (la obtienes al desplegar Code.gs — ver guía)
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznVrR76WHv2IaxYf64CKav_z8bhTkw8T7XNcG5CtbKFOqay8NIZGw69tpF0F1uWh_Q/exec";
 /* ===================================================================== */
 
-const REQUISITOS = [
+const CONCEPTOS = [
   "PAGARE",
   "AVAL",
   "INE AVAL",
@@ -216,183 +157,325 @@ const REQUISITOS = [
   "CONSTANCIA FISCAL",
   "COMPROBANTE DE DOMICILIO",
   "FIRMAS DE AUTORIZACION",
-  "LIBROS DE RUTA"
+  "LIBROS DE RUTA",
+  "FOTO DE FACHADA"
 ];
-// FOTO DE FACHADA se cubre con el campo de subir foto, no como switch
+
+const MAX_MB = 4; // límite por foto antes de comprimir
 
 let clientes = [];
+let estadoActual = {}; // concepto -> {marcado, link}
 
-const selectorCliente = document.getElementById('selectorCliente');
-const infoCliente = document.getElementById('infoCliente');
-const checklistDiv = document.getElementById('checklist');
-const progreso = document.getElementById('progreso');
-const btnGuardar = document.getElementById('btnGuardar');
-const mensaje = document.getElementById('mensaje');
-const fotoInput = document.getElementById('fotoEvidencia');
-const previaFoto = document.getElementById('previaFoto');
-const cargando = document.getElementById('cargando');
+const $ = id => document.getElementById(id);
+const filtroVendedor = $('filtroVendedor');
+const selectorCliente = $('selectorCliente');
+const ficha = $('ficha');
+const resumen = $('resumen');
+const textoResumen = $('textoResumen');
+const barraProgreso = $('barraProgreso');
+const listaConceptos = $('listaConceptos');
+const btnGuardar = $('btnGuardar');
+const mensaje = $('mensaje');
+const cargando = $('cargando');
+const capturadoPor = $('capturadoPor');
+
+/* ── Carga de clientes desde el CSV ────────────────────────────────── */
 
 function parseCSV(texto){
-  const filas = texto.trim().split(/\r?\n/).map(f => {
-    // manejo simple de CSV con comas dentro de comillas
-    const resultado = [];
-    let actual = '';
-    let comillas = false;
-    for(let i=0;i<f.length;i++){
-      const c = f[i];
-      if(c === '"'){ comillas = !comillas; }
-      else if(c === ',' && !comillas){ resultado.push(actual); actual=''; }
-      else { actual += c; }
+  const filas = [];
+  let fila = [], campo = '', comillas = false;
+  for(let i=0; i<texto.length; i++){
+    const c = texto[i];
+    if(comillas){
+      if(c === '"'){
+        if(texto[i+1] === '"'){ campo += '"'; i++; }
+        else comillas = false;
+      } else campo += c;
+    } else {
+      if(c === '"') comillas = true;
+      else if(c === ','){ fila.push(campo); campo=''; }
+      else if(c === '\n'){ fila.push(campo); filas.push(fila); fila=[]; campo=''; }
+      else if(c === '\r'){ /* ignorar */ }
+      else campo += c;
     }
-    resultado.push(actual);
-    return resultado.map(x => x.trim());
-  });
-  return filas;
+  }
+  if(campo !== '' || fila.length){ fila.push(campo); filas.push(fila); }
+  return filas.map(f => f.map(x => x.trim()));
 }
 
-function normaliza(txt){
-  return (txt||'').toString().trim().toUpperCase();
-}
+const norm = t => (t||'').toString().trim().toUpperCase();
 
 async function cargarClientes(){
   try{
     const resp = await fetch(CSV_URL + '&t=' + Date.now());
-    const texto = await resp.text();
-    const filas = parseCSV(texto);
-    const encabezado = filas[0].map(normaliza);
-    const idxCodigo = encabezado.indexOf('CODIGO DE CLIENTE');
-    const idxNombre = encabezado.indexOf('NOMBRE DE CLIENTE');
+    const filas = parseCSV(await resp.text());
+    const enc = filas[0].map(norm);
 
-    if(idxCodigo === -1 || idxNombre === -1){
-      throw new Error('No se encontraron las columnas CODIGO DE CLIENTE / NOMBRE DE CLIENTE en el Sheet.');
-    }
+    const iCod = enc.indexOf('CODIGO DE CLIENTE');
+    const iNom = enc.indexOf('NOMBRE DE CLIENTE');
+    const iVen = enc.indexOf('VENDEDOR');
 
+    if(iCod === -1 || iNom === -1)
+      throw new Error('El Sheet debe tener las columnas CODIGO DE CLIENTE y NOMBRE DE CLIENTE.');
+
+    const vistos = new Set();
     clientes = filas.slice(1)
-      .filter(f => f[idxCodigo] && f[idxNombre])
-      .map(f => ({ codigo: f[idxCodigo], nombre: f[idxNombre] }));
+      .filter(f => f[iNom] && f[iCod])
+      .map(f => ({
+        codigo: f[iCod],
+        nombre: f[iNom],
+        vendedor: iVen > -1 ? (f[iVen] || '') : ''
+      }))
+      .filter(c => { const k = c.codigo + '|' + c.nombre; if(vistos.has(k)) return false; vistos.add(k); return true; })
+      .sort((a,b) => a.nombre.localeCompare(b.nombre, 'es'));
 
-    selectorCliente.innerHTML = '<option value="">-- Selecciona un cliente --</option>' +
-      clientes.map(c => `<option value="${c.codigo}">${c.codigo} - ${c.nombre}</option>`).join('');
+    const vendedores = [...new Set(clientes.map(c => c.vendedor).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+    filtroVendedor.innerHTML = '<option value="">Todos los vendedores</option>' +
+      vendedores.map(v => `<option value="${escapar(v)}">${escapar(v)}</option>`).join('');
+
+    pintarClientes();
 
   }catch(err){
-    selectorCliente.innerHTML = '<option value="">Error al cargar clientes</option>';
-    mostrarMensaje('No se pudo cargar la lista de clientes: ' + err.message, 'error');
+    selectorCliente.innerHTML = '<option value="">Error al cargar</option>';
+    aviso('No se pudo cargar la lista de clientes: ' + err.message, 'error');
   }
 }
 
+function escapar(t){
+  return String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function pintarClientes(){
+  const v = filtroVendedor.value;
+  const lista = v ? clientes.filter(c => c.vendedor === v) : clientes;
+  selectorCliente.innerHTML = '<option value="">-- Selecciona un cliente --</option>' +
+    lista.map(c => `<option value="${escapar(c.codigo)}">${escapar(c.nombre)}</option>`).join('');
+  ficha.style.display = 'none';
+  resumen.style.display = 'none';
+  listaConceptos.innerHTML = '';
+  btnGuardar.disabled = true;
+}
+
+/* ── Checklist ─────────────────────────────────────────────────────── */
+
 function construirChecklist(){
-  checklistDiv.innerHTML = REQUISITOS.map((req, i) => `
-    <div class="item">
-      <span>${req}</span>
-      <label class="switch">
-        <input type="checkbox" class="reqCheck" data-req="${req}" id="chk${i}">
-        <span class="slider"></span>
-      </label>
+  listaConceptos.innerHTML = CONCEPTOS.map((c, i) => `
+    <div class="concepto" id="concepto${i}" data-concepto="${escapar(c)}">
+      <div class="concepto-cabecera" onclick="alternar(${i})">
+        <div class="palomita">&#10003;</div>
+        <div class="concepto-titulo">${escapar(c)}</div>
+        <span class="insignia" id="insignia${i}">Pendiente</span>
+        <span class="flecha">&#9654;</span>
+      </div>
+      <div class="concepto-detalle">
+        <textarea id="nota${i}" placeholder="Evidencia escrita: folio, observación, quién lo entregó, fecha..."
+          oninput="evaluar(${i})"></textarea>
+        <div class="fila-archivo">
+          <label class="btn-foto" for="foto${i}">Adjuntar foto</label>
+          <input type="file" id="foto${i}" accept="image/*" capture="environment" onchange="cargarFoto(${i})">
+          <span class="nombre-archivo" id="nombreArchivo${i}"></span>
+        </div>
+        <img class="previa" id="previa${i}">
+        <a class="link-previo" id="linkPrevio${i}" target="_blank" style="display:none">Ver evidencia ya registrada</a>
+      </div>
     </div>
   `).join('');
 
-  document.querySelectorAll('.reqCheck').forEach(chk => {
-    chk.addEventListener('change', actualizarProgreso);
-  });
-  actualizarProgreso();
+  CONCEPTOS.forEach((c, i) => aplicarEstadoPrevio(c, i));
+  actualizarResumen();
 }
 
-function actualizarProgreso(){
-  const checks = document.querySelectorAll('.reqCheck');
-  const marcados = document.querySelectorAll('.reqCheck:checked').length;
-  const pct = checks.length ? Math.round((marcados/checks.length)*100) : 0;
-  progreso.style.width = pct + '%';
-  validarFormulario();
-}
-
-function validarFormulario(){
-  btnGuardar.disabled = !selectorCliente.value;
-}
-
-selectorCliente.addEventListener('change', () => {
-  const c = clientes.find(x => x.codigo === selectorCliente.value);
-  if(c){
-    infoCliente.style.display = 'block';
-    infoCliente.innerHTML = `<strong>${c.codigo}</strong> — ${c.nombre}`;
-  }else{
-    infoCliente.style.display = 'none';
+function aplicarEstadoPrevio(concepto, i){
+  const prev = estadoActual[concepto];
+  if(!prev) return;
+  if(prev.link){
+    const a = $('linkPrevio'+i);
+    a.href = prev.link;
+    a.style.display = 'block';
   }
-  construirChecklist();
-});
+  if(prev.marcado) marcar(i, true);
+}
 
-fotoInput.addEventListener('change', () => {
-  const archivo = fotoInput.files[0];
-  if(archivo){
+function alternar(i){
+  $('concepto'+i).classList.toggle('abierto');
+}
+
+function tieneEvidencia(i){
+  const nota = $('nota'+i).value.trim();
+  const archivo = $('foto'+i).files[0];
+  const linkPrevio = $('linkPrevio'+i).style.display !== 'none';
+  return !!(nota || archivo || linkPrevio);
+}
+
+function evaluar(i){
+  marcar(i, tieneEvidencia(i));
+}
+
+function marcar(i, valor){
+  const el = $('concepto'+i);
+  el.classList.toggle('completo', valor);
+  $('insignia'+i).textContent = valor ? 'Con evidencia' : 'Pendiente';
+  actualizarResumen();
+}
+
+function actualizarResumen(){
+  const total = CONCEPTOS.length;
+  const hechos = document.querySelectorAll('.concepto.completo').length;
+  textoResumen.textContent = hechos + ' de ' + total;
+  barraProgreso.style.width = Math.round((hechos/total)*100) + '%';
+}
+
+function cargarFoto(i){
+  const input = $('foto'+i);
+  const archivo = input.files[0];
+  if(!archivo) return;
+
+  if(archivo.size > MAX_MB * 1024 * 1024){
+    aviso('La foto de ' + CONCEPTOS[i] + ' pesa más de ' + MAX_MB + ' MB; se comprimirá al guardar.', 'aviso');
+  }
+
+  $('nombreArchivo'+i).textContent = archivo.name;
+  const lector = new FileReader();
+  lector.onload = e => {
+    const img = $('previa'+i);
+    img.src = e.target.result;
+    img.style.display = 'block';
+  };
+  lector.readAsDataURL(archivo);
+  evaluar(i);
+}
+
+/* ── Compresión de imagen (para que no truene el POST) ─────────────── */
+
+function comprimirImagen(archivo, maxLado = 1600, calidad = 0.75){
+  return new Promise((resolve, reject) => {
     const lector = new FileReader();
     lector.onload = e => {
-      previaFoto.src = e.target.result;
-      previaFoto.style.display = 'block';
+      const img = new Image();
+      img.onload = () => {
+        let { width:w, height:h } = img;
+        if(Math.max(w,h) > maxLado){
+          const f = maxLado / Math.max(w,h);
+          w = Math.round(w*f); h = Math.round(h*f);
+        }
+        const lienzo = document.createElement('canvas');
+        lienzo.width = w; lienzo.height = h;
+        lienzo.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = lienzo.toDataURL('image/jpeg', calidad);
+        resolve({ base64: dataUrl.split(',')[1], tipo: 'image/jpeg' });
+      };
+      img.onerror = () => reject(new Error('No se pudo procesar la imagen.'));
+      img.src = e.target.result;
     };
+    lector.onerror = () => reject(new Error('No se pudo leer el archivo.'));
     lector.readAsDataURL(archivo);
+  });
+}
+
+/* ── Selección de cliente ──────────────────────────────────────────── */
+
+filtroVendedor.addEventListener('change', pintarClientes);
+
+selectorCliente.addEventListener('change', async () => {
+  const c = clientes.find(x => x.codigo === selectorCliente.value);
+  estadoActual = {};
+
+  if(!c){
+    ficha.style.display = 'none';
+    resumen.style.display = 'none';
+    listaConceptos.innerHTML = '';
+    btnGuardar.disabled = true;
+    return;
   }
+
+  ficha.style.display = 'block';
+  ficha.innerHTML = `
+    <div class="linea"><span class="etiqueta">Cliente</span><span>${escapar(c.nombre)}</span></div>
+    <div class="linea"><span class="etiqueta">Código</span><span><strong>${escapar(c.codigo)}</strong></span></div>
+    <div class="linea"><span class="etiqueta">Vendedor</span><span>${escapar(c.vendedor || '—')}</span></div>
+  `;
+  resumen.style.display = 'flex';
+  listaConceptos.innerHTML = '<p style="font-size:13px;color:#5a6b7a">Consultando lo ya registrado...</p>';
+  btnGuardar.disabled = true;
+  mensaje.style.display = 'none';
+
+  // Traer lo que ya está guardado en el Sheet para este cliente
+  try{
+    const resp = await fetch(APPS_SCRIPT_URL + '?accion=estado&codigo=' + encodeURIComponent(c.codigo));
+    const r = await resp.json();
+    if(r.ok && r.estado) estadoActual = r.estado;
+  }catch(err){
+    // Si falla, seguimos con el checklist en blanco
+  }
+
+  construirChecklist();
+  btnGuardar.disabled = false;
 });
 
-function mostrarMensaje(texto, tipo){
+/* ── Guardado ──────────────────────────────────────────────────────── */
+
+function aviso(texto, tipo){
   mensaje.textContent = texto;
   mensaje.className = 'mensaje ' + tipo;
 }
 
-function archivoABase64(archivo){
-  return new Promise((resolve, reject) => {
-    const lector = new FileReader();
-    lector.onload = () => resolve(lector.result.split(',')[1]); // solo el base64
-    lector.onerror = reject;
-    lector.readAsDataURL(archivo);
-  });
-}
-
 btnGuardar.addEventListener('click', async () => {
-  if(APPS_SCRIPT_URL.includes('PEGA_AQUI')){
-    mostrarMensaje('Falta configurar la URL de Apps Script en el archivo HTML (APPS_SCRIPT_URL).', 'error');
-    return;
-  }
-
   const c = clientes.find(x => x.codigo === selectorCliente.value);
   if(!c) return;
-
-  const datos = {
-    codigo: c.codigo,
-    nombre: c.nombre,
-    fecha: new Date().toISOString(),
-    requisitos: {}
-  };
-  document.querySelectorAll('.reqCheck').forEach(chk => {
-    datos.requisitos[chk.dataset.req] = chk.checked;
-  });
-
-  const archivoFoto = fotoInput.files[0];
-  if(archivoFoto){
-    datos.fotoBase64 = await archivoABase64(archivoFoto);
-    datos.fotoNombre = `${c.codigo}_${Date.now()}_${archivoFoto.name}`;
-    datos.fotoTipo = archivoFoto.type;
-  }
 
   btnGuardar.disabled = true;
   cargando.style.display = 'block';
   mensaje.style.display = 'none';
 
   try{
+    const conceptos = [];
+    for(let i = 0; i < CONCEPTOS.length; i++){
+      const item = {
+        concepto: CONCEPTOS[i],
+        nota: $('nota'+i).value.trim(),
+        marcado: $('concepto'+i).classList.contains('completo')
+      };
+      const archivo = $('foto'+i).files[0];
+      if(archivo){
+        const comp = await comprimirImagen(archivo);
+        item.fotoBase64 = comp.base64;
+        item.fotoTipo = comp.tipo;
+        item.fotoNombre = c.codigo + '_' + CONCEPTOS[i].replace(/\s+/g,'_') + '_' + Date.now() + '.jpg';
+      }
+      conceptos.push(item);
+    }
+
+    const carga = {
+      codigo: c.codigo,
+      nombre: c.nombre,
+      vendedor: c.vendedor,
+      capturadoPor: capturadoPor.value.trim(),
+      conceptos: conceptos
+    };
+
     const resp = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS
-      body: JSON.stringify(datos)
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(carga)
     });
-    const resultado = await resp.json();
+    const r = await resp.json();
+    if(!r.ok) throw new Error(r.error || 'Error en el servidor.');
 
-    if(resultado.ok){
-      mostrarMensaje('Checklist guardado correctamente para ' + c.nombre + '.', 'exito');
-      fotoInput.value = '';
-      previaFoto.style.display = 'none';
-    }else{
-      throw new Error(resultado.error || 'Error desconocido en el servidor.');
-    }
+    estadoActual = r.estado || {};
+    aviso('Guardado: ' + c.nombre + ' — ' + r.completos + ' de ' + r.total + ' requisitos con evidencia.', 'exito');
+
+    // Limpiar archivos ya subidos y reflejar los links nuevos
+    CONCEPTOS.forEach((cn, i) => {
+      $('foto'+i).value = '';
+      $('nombreArchivo'+i).textContent = '';
+      $('previa'+i).style.display = 'none';
+      const prev = estadoActual[cn];
+      const a = $('linkPrevio'+i);
+      if(prev && prev.link){ a.href = prev.link; a.style.display = 'block'; }
+    });
+
   }catch(err){
-    mostrarMensaje('Error al guardar: ' + err.message, 'error');
+    aviso('Error al guardar: ' + err.message, 'error');
   }finally{
     cargando.style.display = 'none';
     btnGuardar.disabled = false;
