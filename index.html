@@ -2,142 +2,278 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1f4e78">
 <title>Checklist de Expediente — Clientes Mayoreo</title>
 <style>
   :root{
-    --azul:#1f4e78;
-    --azul-claro:#d9e6f2;
-    --verde:#2e7d32;
-    --verde-suave:#e6f4ea;
-    --rojo:#c62828;
-    --gris:#eef1f4;
-    --borde:#cfd8e0;
-    --texto:#243746;
+    --azul:#1f4e78; --azul-2:#2d6ca3; --azul-claro:#e3edf6;
+    --verde:#2e7d32; --verde-suave:#e6f4ea;
+    --ambar:#b26a00; --ambar-suave:#fff4e0;
+    --rojo:#c62828; --rojo-suave:#fdecea;
+    --fondo:#eef1f4; --borde:#d3dbe3; --texto:#243746; --tenue:#6b7a89;
   }
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
   body{
-    font-family:'Segoe UI', Arial, sans-serif;
-    background:var(--gris);
-    margin:0;
-    padding:16px;
-    color:var(--texto);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    background:var(--fondo); color:var(--texto); font-size:15px; line-height:1.45;
+    padding-bottom:env(safe-area-inset-bottom);
   }
-  .contenedor{
-    max-width:700px;
-    margin:0 auto;
-    background:#fff;
-    border-radius:12px;
-    box-shadow:0 2px 14px rgba(0,0,0,0.08);
-    overflow:hidden;
-  }
-  .encabezado{ background:var(--azul); color:#fff; padding:18px 20px; }
-  .encabezado h1{ margin:0; font-size:19px; }
-  .encabezado p{ margin:4px 0 0; font-size:13px; opacity:.85; }
-  .cuerpo{ padding:20px; }
+  .app{max-width:760px; margin:0 auto; background:#fff; min-height:100vh;}
 
-  label.campo{ display:block; font-weight:600; font-size:12.5px; margin-bottom:6px; color:var(--azul); text-transform:uppercase; letter-spacing:.3px; }
-  select, input[type=text]{
-    width:100%; padding:11px; border:1px solid var(--borde); border-radius:7px;
-    font-size:14px; margin-bottom:14px; background:#fff; font-family:inherit;
+  /* ── Barra superior ── */
+  .barra{
+    background:var(--azul); color:#fff; padding:14px 16px;
+    display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:20;
   }
+  .barra h1{margin:0; font-size:17px; font-weight:600; flex:1;}
+  .barra .sub{font-size:12px; opacity:.8; font-weight:400; display:block; margin-top:2px;}
+  .btn-atras{
+    background:rgba(255,255,255,.18); border:none; color:#fff; width:34px; height:34px;
+    border-radius:8px; font-size:18px; cursor:pointer; flex-shrink:0; line-height:1;
+  }
+  .btn-atras:active{background:rgba(255,255,255,.32);}
 
-  .ficha{
-    display:none; background:var(--azul-claro); border-radius:8px;
-    padding:12px 14px; margin-bottom:18px; font-size:14px;
-  }
-  .ficha .linea{ display:flex; justify-content:space-between; padding:3px 0; }
-  .ficha .etiqueta{ font-weight:600; color:var(--azul); font-size:12px; text-transform:uppercase; }
+  .pantalla{display:none; padding:16px;}
+  .pantalla.activa{display:block;}
 
-  .resumen{ display:none; align-items:center; gap:10px; margin-bottom:14px; font-size:13px; color:#5a6b7a; }
-  .barra{ flex:1; height:8px; background:#dde3e9; border-radius:4px; overflow:hidden; }
-  .barra div{ height:100%; width:0%; background:var(--verde); transition:width .3s; }
+  /* ── Tarjetas de estadística ── */
+  .tarjetas{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:16px;}
+  .tarjeta{
+    border-radius:10px; padding:12px 10px; text-align:center; border:1px solid var(--borde);
+    background:#fafbfc; cursor:pointer; transition:.15s;
+  }
+  .tarjeta:active{transform:scale(.97);}
+  .tarjeta.activa{box-shadow:0 0 0 2px var(--azul) inset;}
+  .tarjeta .n{font-size:24px; font-weight:700; line-height:1.1;}
+  .tarjeta .t{font-size:11px; color:var(--tenue); text-transform:uppercase; letter-spacing:.3px; margin-top:3px;}
+  .tarjeta.total .n{color:var(--azul);}
+  .tarjeta.ok    .n{color:var(--verde);}
+  .tarjeta.falta .n{color:var(--ambar);}
 
-  .concepto{
-    border:1px solid var(--borde); border-radius:9px; margin-bottom:10px; overflow:hidden; background:#fff;
+  /* ── Filtros ── */
+  .filtros{display:flex; flex-direction:column; gap:9px; margin-bottom:14px;}
+  input[type=search], select, input[type=text]{
+    width:100%; padding:11px 12px; border:1px solid var(--borde); border-radius:8px;
+    font-size:15px; background:#fff; font-family:inherit; color:var(--texto);
+    -webkit-appearance:none; appearance:none;
   }
-  .concepto.completo{ border-color:var(--verde); background:var(--verde-suave); }
-  .concepto-cabecera{
-    display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; user-select:none;
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a89' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 12px center; padding-right:34px;}
+  .conteo-lista{font-size:12.5px; color:var(--tenue); margin-bottom:8px;}
+
+  /* ── Lista de clientes ── */
+  .cliente{
+    display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid var(--borde);
+    border-radius:10px; margin-bottom:8px; cursor:pointer; background:#fff; transition:.15s;
   }
-  .palomita{
-    width:24px; height:24px; border-radius:50%; border:2px solid var(--borde);
+  .cliente:active{background:var(--azul-claro);}
+  .cliente.completo{border-left:4px solid var(--verde);}
+  .cliente.parcial {border-left:4px solid var(--ambar);}
+  .cliente.vacio   {border-left:4px solid var(--borde);}
+  .cliente .datos{flex:1; min-width:0;}
+  .cliente .nombre{font-weight:600; font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cliente .meta{font-size:12px; color:var(--tenue); margin-top:2px;}
+  .cliente .estado{text-align:right; flex-shrink:0;}
+  .pill{
+    display:inline-block; font-size:12px; font-weight:700; padding:4px 9px; border-radius:12px;
+    background:#e8edf2; color:var(--tenue);
+  }
+  .cliente.completo .pill{background:var(--verde); color:#fff;}
+  .cliente.parcial  .pill{background:var(--ambar-suave); color:var(--ambar);}
+  .vacio-lista{text-align:center; color:var(--tenue); padding:32px 16px; font-size:14px;}
+
+  /* ── Ficha del cliente ── */
+  .ficha{background:var(--azul-claro); border-radius:10px; padding:13px 15px; margin-bottom:16px;}
+  .ficha .linea{display:flex; justify-content:space-between; gap:14px; padding:3px 0; font-size:14px;}
+  .ficha .etiqueta{font-size:11.5px; font-weight:700; color:var(--azul); text-transform:uppercase; letter-spacing:.3px; flex-shrink:0;}
+  .ficha .valor{text-align:right;}
+
+  .progreso-fila{display:flex; align-items:center; gap:10px; margin-bottom:14px; font-size:13px; color:var(--tenue);}
+  .barra-p{flex:1; height:8px; background:#dfe5eb; border-radius:4px; overflow:hidden;}
+  .barra-p div{height:100%; width:0%; background:var(--verde); transition:width .25s;}
+
+  .acciones-rapidas{display:flex; gap:8px; margin-bottom:12px;}
+  .btn-mini{
+    flex:1; padding:9px; font-size:13px; border:1px solid var(--borde); background:#fff;
+    border-radius:8px; cursor:pointer; color:var(--azul); font-weight:600; font-family:inherit;
+  }
+  .btn-mini:active{background:var(--azul-claro);}
+
+  /* ── Conceptos ── */
+  .concepto{border:1px solid var(--borde); border-radius:10px; margin-bottom:9px; background:#fff; overflow:hidden;}
+  .concepto.completo{border-color:var(--verde); background:var(--verde-suave);}
+  .concepto-fila{display:flex; align-items:center; gap:12px; padding:14px; cursor:pointer;}
+  .caja{
+    width:26px; height:26px; border-radius:6px; border:2px solid #b9c4cf; background:#fff;
     display:flex; align-items:center; justify-content:center; flex-shrink:0;
-    font-size:14px; font-weight:700; color:transparent; background:#fff; transition:.2s;
+    font-size:16px; font-weight:700; color:transparent; transition:.15s;
   }
-  .concepto.completo .palomita{ background:var(--verde); border-color:var(--verde); color:#fff; }
-  .concepto-titulo{ flex:1; font-size:14px; font-weight:600; }
-  .flecha{ font-size:12px; color:#8a99a8; transition:transform .2s; }
-  .concepto.abierto .flecha{ transform:rotate(90deg); }
-  .insignia{ font-size:11px; padding:2px 8px; border-radius:10px; background:#dde3e9; color:#5a6b7a; }
-  .concepto.completo .insignia{ background:var(--verde); color:#fff; }
+  .concepto.completo .caja{background:var(--verde); border-color:var(--verde); color:#fff;}
+  .concepto-nombre{flex:1; font-size:14.5px; font-weight:600;}
+  .btn-evidencia{
+    background:none; border:none; font-size:12px; color:var(--azul-2); cursor:pointer;
+    padding:6px 8px; font-weight:600; flex-shrink:0; font-family:inherit; border-radius:6px;
+  }
+  .btn-evidencia:active{background:var(--azul-claro);}
+  .btn-evidencia.tiene{color:var(--verde);}
 
-  .concepto-detalle{ display:none; padding:0 14px 14px; border-top:1px dashed var(--borde); }
-  .concepto.abierto .concepto-detalle{ display:block; }
-  .concepto-detalle textarea{
-    width:100%; min-height:60px; padding:9px; border:1px solid var(--borde);
-    border-radius:6px; font-size:13.5px; font-family:inherit; resize:vertical; margin-top:10px;
+  .detalle{display:none; padding:0 14px 14px; border-top:1px dashed var(--borde);}
+  .concepto.abierto .detalle{display:block;}
+  .detalle textarea{
+    width:100%; min-height:58px; padding:10px; border:1px solid var(--borde); border-radius:8px;
+    font-size:14px; font-family:inherit; resize:vertical; margin-top:11px; color:var(--texto);
   }
-  .fila-archivo{ display:flex; align-items:center; gap:10px; margin-top:9px; flex-wrap:wrap; }
+  .fila-archivo{display:flex; align-items:center; gap:10px; margin-top:9px; flex-wrap:wrap;}
   .btn-foto{
-    display:inline-block; padding:8px 14px; background:#fff; border:1px solid var(--azul);
-    color:var(--azul); border-radius:6px; font-size:13px; cursor:pointer; font-weight:600;
+    padding:9px 14px; background:#fff; border:1px solid var(--azul); color:var(--azul);
+    border-radius:8px; font-size:13px; cursor:pointer; font-weight:600; display:inline-block;
   }
-  .btn-foto:hover{ background:var(--azul-claro); }
-  .concepto-detalle input[type=file]{ display:none; }
-  .nombre-archivo{ font-size:12px; color:#5a6b7a; }
-  .previa{ max-height:120px; border-radius:6px; margin-top:8px; display:none; }
-  .link-previo{ font-size:12px; margin-top:8px; display:block; color:var(--azul); }
+  .detalle input[type=file]{display:none;}
+  .nombre-archivo{font-size:12px; color:var(--tenue);}
+  .previa{max-height:130px; border-radius:8px; margin-top:9px; display:none;}
+  .link-previo{font-size:12.5px; margin-top:9px; display:none; color:var(--azul-2); font-weight:600;}
 
-  .pie{ margin-top:18px; }
+  /* ── Pie fijo ── */
+  .pie{
+    position:sticky; bottom:0; background:#fff; padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--borde); margin:16px -16px -16px;
+  }
   button.principal{
-    width:100%; padding:14px; background:var(--azul); color:#fff; border:none;
-    border-radius:9px; font-size:15px; font-weight:600; cursor:pointer;
+    width:100%; padding:15px; background:var(--azul); color:#fff; border:none;
+    border-radius:10px; font-size:15.5px; font-weight:700; cursor:pointer; font-family:inherit;
   }
-  button.principal:disabled{ background:#9aa7b1; cursor:not-allowed; }
-  button.principal:hover:not(:disabled){ background:#163a5c; }
+  button.principal:disabled{background:#a3aeb8;}
+  button.principal:active:not(:disabled){background:#163a5c;}
 
-  .mensaje{ margin-top:14px; padding:11px 14px; border-radius:7px; font-size:14px; display:none; }
-  .mensaje.exito{ background:var(--verde-suave); color:var(--verde); display:block; }
-  .mensaje.error{ background:#fdecea; color:var(--rojo); display:block; }
-  .mensaje.aviso{ background:#fff8e1; color:#8a6d00; display:block; }
-  .cargando{ display:none; text-align:center; font-size:13px; color:#5a6b7a; margin-bottom:10px; }
+  /* ── Mensajes ── */
+  .mensaje{margin-top:12px; padding:11px 14px; border-radius:8px; font-size:13.5px; display:none;}
+  .mensaje.exito{background:var(--verde-suave); color:var(--verde); display:block;}
+  .mensaje.error{background:var(--rojo-suave); color:var(--rojo); display:block;}
+  .mensaje.aviso{background:var(--ambar-suave); color:var(--ambar); display:block;}
+
+  /* ── Overlay de guardado ── */
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,35,50,.6); display:none;
+    align-items:center; justify-content:center; z-index:100; padding:24px;
+  }
+  .overlay.visible{display:flex;}
+  .caja-overlay{
+    background:#fff; border-radius:16px; padding:30px 28px; text-align:center; max-width:300px; width:100%;
+    box-shadow:0 10px 40px rgba(0,0,0,.25);
+  }
+  .circulo{
+    width:74px; height:74px; border-radius:50%; margin:0 auto 16px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .circulo.ok{background:var(--verde); animation:brote .35s ease-out;}
+  .circulo.ok svg{width:40px; height:40px;}
+  .circulo.ok svg path{
+    stroke:#fff; stroke-width:5; fill:none; stroke-linecap:round; stroke-linejoin:round;
+    stroke-dasharray:48; stroke-dashoffset:48; animation:trazo .4s .18s ease-out forwards;
+  }
+  .circulo.espera{
+    border:5px solid var(--azul-claro); border-top-color:var(--azul); animation:girar .8s linear infinite;
+  }
+  @keyframes brote{0%{transform:scale(0);}60%{transform:scale(1.12);}100%{transform:scale(1);}}
+  @keyframes trazo{to{stroke-dashoffset:0;}}
+  @keyframes girar{to{transform:rotate(360deg);}}
+  .texto-overlay{font-size:16.5px; font-weight:700;}
+  .subtexto-overlay{font-size:13px; color:var(--tenue); margin-top:6px;}
+
+  /* ── Diagnóstico ── */
+  .diag{
+    margin-top:18px; border:1px solid var(--borde); border-radius:9px; padding:11px 13px;
+    font-size:12.5px; background:#fafbfc;
+  }
+  .diag summary{cursor:pointer; color:var(--tenue); font-weight:600;}
+  .diag .fila-d{display:flex; justify-content:space-between; gap:10px; padding:5px 0; border-bottom:1px solid #eef1f4;}
+  .diag .fila-d:last-child{border-bottom:none;}
+  .diag .ok{color:var(--verde); font-weight:700;}
+  .diag .mal{color:var(--rojo); font-weight:700;}
+  .diag code{font-size:11px; word-break:break-all; color:var(--tenue);}
 </style>
 </head>
 <body>
 
-<div class="contenedor">
-  <div class="encabezado">
-    <h1>Checklist de Expediente</h1>
-    <p>Clientes de Mayoreo — Documentación para condición de venta / crédito</p>
+<div class="app">
+
+  <div class="barra">
+    <button class="btn-atras" id="btnAtras" onclick="irAPanel()" style="display:none">&#8592;</button>
+    <h1 id="tituloBarra">Checklist de Expediente<span class="sub" id="subBarra">Clientes de Mayoreo</span></h1>
   </div>
 
-  <div class="cuerpo">
+  <!-- ══════════ PANTALLA 1: PANEL ══════════ -->
+  <div class="pantalla activa" id="pantallaPanel">
 
-    <label class="campo" for="capturadoPor">Quién captura</label>
-    <input type="text" id="capturadoPor" placeholder="Tu nombre" autocomplete="name">
+    <div class="tarjetas">
+      <div class="tarjeta total" data-filtro="todos" onclick="filtrarPorTarjeta('todos')">
+        <div class="n" id="nTotal">—</div><div class="t">Clientes</div>
+      </div>
+      <div class="tarjeta ok" data-filtro="completos" onclick="filtrarPorTarjeta('completos')">
+        <div class="n" id="nCompletos">—</div><div class="t">Completos</div>
+      </div>
+      <div class="tarjeta falta" data-filtro="pendientes" onclick="filtrarPorTarjeta('pendientes')">
+        <div class="n" id="nPendientes">—</div><div class="t">Faltantes</div>
+      </div>
+    </div>
 
-    <label class="campo" for="filtroVendedor">Filtrar por vendedor</label>
-    <select id="filtroVendedor"><option value="">Todos los vendedores</option></select>
+    <div class="filtros">
+      <input type="search" id="busqueda" placeholder="Buscar por nombre o código..." autocomplete="off">
+      <select id="filtroVendedor"><option value="">Todos los vendedores</option></select>
+      <select id="filtroEstado">
+        <option value="todos">Todos los estatus</option>
+        <option value="completos">Solo completos (9 de 9)</option>
+        <option value="pendientes">Solo con faltantes</option>
+        <option value="sinIniciar">Sin iniciar (0 de 9)</option>
+      </select>
+    </div>
 
-    <label class="campo" for="selectorCliente">Cliente</label>
-    <select id="selectorCliente"><option value="">Cargando clientes...</option></select>
+    <div class="conteo-lista" id="conteoLista">Cargando clientes...</div>
+    <div id="listaClientes"></div>
 
+    <details class="diag" id="diagnostico">
+      <summary>Diagnóstico de conexión</summary>
+      <div id="contenidoDiag" style="margin-top:9px"></div>
+    </details>
+  </div>
+
+  <!-- ══════════ PANTALLA 2: CHECKLIST ══════════ -->
+  <div class="pantalla" id="pantallaCliente">
     <div class="ficha" id="ficha"></div>
 
-    <div class="resumen" id="resumen">
-      <span id="textoResumen">0 de 9</span>
-      <div class="barra"><div id="barraProgreso"></div></div>
+    <div class="progreso-fila">
+      <span id="textoProgreso">0 de 9</span>
+      <div class="barra-p"><div id="barraProgreso"></div></div>
+    </div>
+
+    <div class="acciones-rapidas">
+      <button class="btn-mini" onclick="marcarTodos(true)">Marcar todos</button>
+      <button class="btn-mini" onclick="marcarTodos(false)">Limpiar</button>
     </div>
 
     <div id="listaConceptos"></div>
 
-    <div class="pie">
-      <div class="cargando" id="cargando">Guardando y subiendo evidencias...</div>
-      <button class="principal" id="btnGuardar" disabled>Guardar checklist</button>
-      <div class="mensaje" id="mensaje"></div>
+    <div style="margin-top:14px">
+      <label style="font-size:11.5px; font-weight:700; color:var(--azul); text-transform:uppercase; letter-spacing:.3px">Quién captura</label>
+      <input type="text" id="capturadoPor" placeholder="Tu nombre" autocomplete="name" style="margin-top:6px">
     </div>
 
+    <div class="pie">
+      <button class="principal" id="btnGuardar">Guardar checklist</button>
+      <div class="mensaje" id="mensaje"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay">
+  <div class="caja-overlay">
+    <div class="circulo espera" id="circulo"></div>
+    <div class="texto-overlay" id="textoOverlay">Guardando...</div>
+    <div class="subtexto-overlay" id="subtextoOverlay"></div>
   </div>
 </div>
 
@@ -150,219 +286,283 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznVrR76WHv2Iax
 /* ===================================================================== */
 
 const CONCEPTOS = [
-  "PAGARE",
-  "AVAL",
-  "INE AVAL",
-  "INE",
-  "CONSTANCIA FISCAL",
-  "COMPROBANTE DE DOMICILIO",
-  "FIRMAS DE AUTORIZACION",
-  "LIBROS DE RUTA",
-  "FOTO DE FACHADA"
+  "PAGARE","AVAL","INE AVAL","INE","CONSTANCIA FISCAL",
+  "COMPROBANTE DE DOMICILIO","FIRMAS DE AUTORIZACION","LIBROS DE RUTA","FOTO DE FACHADA"
 ];
 
-const MAX_MB = 4; // límite por foto antes de comprimir
-
-let clientes = [];
-let estadoActual = {}; // concepto -> {marcado, link}
-
 const $ = id => document.getElementById(id);
-const filtroVendedor = $('filtroVendedor');
-const selectorCliente = $('selectorCliente');
-const ficha = $('ficha');
-const resumen = $('resumen');
-const textoResumen = $('textoResumen');
-const barraProgreso = $('barraProgreso');
-const listaConceptos = $('listaConceptos');
-const btnGuardar = $('btnGuardar');
-const mensaje = $('mensaje');
-const cargando = $('cargando');
-const capturadoPor = $('capturadoPor');
+const escapar = t => String(t == null ? '' : t)
+  .replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-/* ── Carga de clientes desde el CSV ────────────────────────────────── */
+let clientes = [];        // [{codigo, nombre, vendedor}]
+let resumenGuardado = {}; // codigo -> { CONCEPTO: {marcado, link} }
+let clienteActivo = null;
+let estadoActivo = {};
+const diagnostico = { csv:'pendiente', script:'pendiente', detalleCsv:'', detalleScript:'' };
+
+/* ── CSV ──────────────────────────────────────────────────────────── */
 
 function parseCSV(texto){
-  const filas = [];
-  let fila = [], campo = '', comillas = false;
-  for(let i=0; i<texto.length; i++){
+  const filas = []; let fila = [], campo = '', comillas = false;
+  for(let i=0;i<texto.length;i++){
     const c = texto[i];
     if(comillas){
-      if(c === '"'){
-        if(texto[i+1] === '"'){ campo += '"'; i++; }
-        else comillas = false;
-      } else campo += c;
+      if(c === '"'){ if(texto[i+1] === '"'){ campo += '"'; i++; } else comillas = false; }
+      else campo += c;
     } else {
       if(c === '"') comillas = true;
-      else if(c === ','){ fila.push(campo); campo=''; }
-      else if(c === '\n'){ fila.push(campo); filas.push(fila); fila=[]; campo=''; }
-      else if(c === '\r'){ /* ignorar */ }
-      else campo += c;
+      else if(c === ','){ fila.push(campo); campo = ''; }
+      else if(c === '\n'){ fila.push(campo); filas.push(fila); fila = []; campo = ''; }
+      else if(c !== '\r') campo += c;
     }
   }
   if(campo !== '' || fila.length){ fila.push(campo); filas.push(fila); }
   return filas.map(f => f.map(x => x.trim()));
 }
-
-const norm = t => (t||'').toString().trim().toUpperCase();
+const norm = t => String(t||'').trim().toUpperCase();
 
 async function cargarClientes(){
   try{
-    const resp = await fetch(CSV_URL + '&t=' + Date.now());
+    const resp = await fetch(CSV_URL + '&t=' + Date.now(), {cache:'no-store'});
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
     const filas = parseCSV(await resp.text());
     const enc = filas[0].map(norm);
-
     const iCod = enc.indexOf('CODIGO DE CLIENTE');
     const iNom = enc.indexOf('NOMBRE DE CLIENTE');
     const iVen = enc.indexOf('VENDEDOR');
-
     if(iCod === -1 || iNom === -1)
-      throw new Error('El Sheet debe tener las columnas CODIGO DE CLIENTE y NOMBRE DE CLIENTE.');
+      throw new Error('Faltan columnas CODIGO DE CLIENTE / NOMBRE DE CLIENTE. Encontradas: ' + enc.join(', '));
 
     const vistos = new Set();
     clientes = filas.slice(1)
-      .filter(f => f[iNom] && f[iCod])
-      .map(f => ({
-        codigo: f[iCod],
-        nombre: f[iNom],
-        vendedor: iVen > -1 ? (f[iVen] || '') : ''
-      }))
-      .filter(c => { const k = c.codigo + '|' + c.nombre; if(vistos.has(k)) return false; vistos.add(k); return true; })
-      .sort((a,b) => a.nombre.localeCompare(b.nombre, 'es'));
+      .filter(f => f[iCod] && f[iNom])
+      .map(f => ({ codigo:f[iCod], nombre:f[iNom], vendedor: iVen > -1 ? (f[iVen]||'') : '' }))
+      .filter(c => { const k = c.codigo; if(vistos.has(k)) return false; vistos.add(k); return true; })
+      .sort((a,b) => a.nombre.localeCompare(b.nombre,'es'));
+
+    diagnostico.csv = 'ok';
+    diagnostico.detalleCsv = clientes.length + ' clientes leídos';
 
     const vendedores = [...new Set(clientes.map(c => c.vendedor).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
-    filtroVendedor.innerHTML = '<option value="">Todos los vendedores</option>' +
+    $('filtroVendedor').innerHTML = '<option value="">Todos los vendedores</option>' +
       vendedores.map(v => `<option value="${escapar(v)}">${escapar(v)}</option>`).join('');
 
-    pintarClientes();
-
   }catch(err){
-    selectorCliente.innerHTML = '<option value="">Error al cargar</option>';
-    aviso('No se pudo cargar la lista de clientes: ' + err.message, 'error');
+    diagnostico.csv = 'error';
+    diagnostico.detalleCsv = err.message;
+    $('conteoLista').textContent = 'No se pudo cargar la lista de clientes.';
   }
 }
 
-function escapar(t){
-  return String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* ── Resumen desde Apps Script ─────────────────────────────────────── */
+
+async function cargarResumen(){
+  try{
+    const resp = await fetch(APPS_SCRIPT_URL + '?accion=resumen&t=' + Date.now(), {cache:'no-store'});
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    const r = await resp.json();
+    if(!r.ok) throw new Error(r.error || 'Respuesta no válida');
+    if(!r.resumen) throw new Error('El Apps Script respondió sin "resumen". ¿Volviste a implementar la versión nueva?');
+    resumenGuardado = r.resumen;
+    diagnostico.script = 'ok';
+    diagnostico.detalleScript = Object.keys(resumenGuardado).length + ' clientes con registro previo';
+  }catch(err){
+    diagnostico.script = 'error';
+    diagnostico.detalleScript = err.message;
+    resumenGuardado = {};
+  }
 }
 
-function pintarClientes(){
-  const v = filtroVendedor.value;
-  const lista = v ? clientes.filter(c => c.vendedor === v) : clientes;
-  selectorCliente.innerHTML = '<option value="">-- Selecciona un cliente --</option>' +
-    lista.map(c => `<option value="${escapar(c.codigo)}">${escapar(c.nombre)}</option>`).join('');
-  ficha.style.display = 'none';
-  resumen.style.display = 'none';
-  listaConceptos.innerHTML = '';
-  btnGuardar.disabled = true;
+/* ── Cálculo de estatus ────────────────────────────────────────────── */
+
+function conteoCliente(codigo){
+  const e = resumenGuardado[codigo];
+  if(!e) return 0;
+  return CONCEPTOS.filter(c => e[c] && e[c].marcado).length;
+}
+
+function actualizarTarjetas(){
+  const total = clientes.length;
+  const completos = clientes.filter(c => conteoCliente(c.codigo) === CONCEPTOS.length).length;
+  $('nTotal').textContent = total;
+  $('nCompletos').textContent = completos;
+  $('nPendientes').textContent = total - completos;
+}
+
+/* ── Lista ─────────────────────────────────────────────────────────── */
+
+function pintarLista(){
+  const texto = norm($('busqueda').value);
+  const vend = $('filtroVendedor').value;
+  const est = $('filtroEstado').value;
+
+  const lista = clientes.filter(c => {
+    if(vend && c.vendedor !== vend) return false;
+    if(texto && !(norm(c.nombre).includes(texto) || norm(c.codigo).includes(texto))) return false;
+    const n = conteoCliente(c.codigo);
+    if(est === 'completos'  && n !== CONCEPTOS.length) return false;
+    if(est === 'pendientes' && n === CONCEPTOS.length) return false;
+    if(est === 'sinIniciar' && n !== 0) return false;
+    return true;
+  });
+
+  $('conteoLista').textContent = lista.length === clientes.length
+    ? `Mostrando ${lista.length} clientes`
+    : `Mostrando ${lista.length} de ${clientes.length} clientes`;
+
+  if(!lista.length){
+    $('listaClientes').innerHTML = '<div class="vacio-lista">No hay clientes con esos filtros.</div>';
+    return;
+  }
+
+  $('listaClientes').innerHTML = lista.map(c => {
+    const n = conteoCliente(c.codigo);
+    const clase = n === CONCEPTOS.length ? 'completo' : (n > 0 ? 'parcial' : 'vacio');
+    return `
+      <div class="cliente ${clase}" onclick="abrirCliente('${escapar(c.codigo).replace(/'/g,"\\'")}')">
+        <div class="datos">
+          <div class="nombre">${escapar(c.nombre)}</div>
+          <div class="meta">${escapar(c.codigo)}${c.vendedor ? ' · ' + escapar(c.vendedor) : ''}</div>
+        </div>
+        <div class="estado"><span class="pill">${n}/${CONCEPTOS.length}</span></div>
+      </div>`;
+  }).join('');
+}
+
+function filtrarPorTarjeta(cual){
+  $('filtroEstado').value = cual === 'todos' ? 'todos' : cual;
+  document.querySelectorAll('.tarjeta').forEach(t =>
+    t.classList.toggle('activa', t.dataset.filtro === cual && cual !== 'todos'));
+  pintarLista();
+}
+
+['busqueda','filtroVendedor','filtroEstado'].forEach(id =>
+  $(id).addEventListener('input', pintarLista));
+$('filtroEstado').addEventListener('change', pintarLista);
+$('filtroVendedor').addEventListener('change', pintarLista);
+
+/* ── Navegación ────────────────────────────────────────────────────── */
+
+function irAPanel(){
+  $('pantallaCliente').classList.remove('activa');
+  $('pantallaPanel').classList.add('activa');
+  $('btnAtras').style.display = 'none';
+  $('tituloBarra').innerHTML = 'Checklist de Expediente<span class="sub">Clientes de Mayoreo</span>';
+  $('mensaje').style.display = 'none';
+  clienteActivo = null;
+  window.scrollTo(0,0);
+}
+
+function abrirCliente(codigo){
+  const c = clientes.find(x => x.codigo === codigo);
+  if(!c) return;
+  clienteActivo = c;
+  estadoActivo = resumenGuardado[codigo] || {};
+
+  $('pantallaPanel').classList.remove('activa');
+  $('pantallaCliente').classList.add('activa');
+  $('btnAtras').style.display = 'block';
+  $('tituloBarra').innerHTML = escapar(c.nombre) + '<span class="sub">' + escapar(c.codigo) + '</span>';
+
+  $('ficha').innerHTML = `
+    <div class="linea"><span class="etiqueta">Cliente</span><span class="valor">${escapar(c.nombre)}</span></div>
+    <div class="linea"><span class="etiqueta">Código</span><span class="valor"><strong>${escapar(c.codigo)}</strong></span></div>
+    <div class="linea"><span class="etiqueta">Vendedor</span><span class="valor">${escapar(c.vendedor || '—')}</span></div>
+  `;
+
+  construirChecklist();
+  $('mensaje').style.display = 'none';
+  window.scrollTo(0,0);
 }
 
 /* ── Checklist ─────────────────────────────────────────────────────── */
 
 function construirChecklist(){
-  listaConceptos.innerHTML = CONCEPTOS.map((c, i) => `
-    <div class="concepto" id="concepto${i}" data-concepto="${escapar(c)}">
-      <div class="concepto-cabecera" onclick="alternar(${i})">
-        <div class="palomita">&#10003;</div>
-        <div class="concepto-titulo">${escapar(c)}</div>
-        <span class="insignia" id="insignia${i}">Pendiente</span>
-        <span class="flecha">&#9654;</span>
+  $('listaConceptos').innerHTML = CONCEPTOS.map((c,i) => `
+    <div class="concepto" id="concepto${i}">
+      <div class="concepto-fila" onclick="alternarCasilla(${i})">
+        <div class="caja">&#10003;</div>
+        <div class="concepto-nombre">${escapar(c)}</div>
+        <button class="btn-evidencia" id="btnEv${i}" onclick="event.stopPropagation(); alternarDetalle(${i})">+ evidencia</button>
       </div>
-      <div class="concepto-detalle">
-        <textarea id="nota${i}" placeholder="Evidencia escrita: folio, observación, quién lo entregó, fecha..."
-          oninput="evaluar(${i})"></textarea>
+      <div class="detalle">
+        <textarea id="nota${i}" placeholder="Comentario u observación (opcional)" oninput="revisarEvidencia(${i})"></textarea>
         <div class="fila-archivo">
           <label class="btn-foto" for="foto${i}">Adjuntar foto</label>
-          <input type="file" id="foto${i}" accept="image/*" capture="environment" onchange="cargarFoto(${i})">
+          <input type="file" id="foto${i}" accept="image/*" onchange="cargarFoto(${i})">
           <span class="nombre-archivo" id="nombreArchivo${i}"></span>
         </div>
         <img class="previa" id="previa${i}">
-        <a class="link-previo" id="linkPrevio${i}" target="_blank" style="display:none">Ver evidencia ya registrada</a>
+        <a class="link-previo" id="linkPrevio${i}" target="_blank" rel="noopener">Ver evidencia registrada &#8599;</a>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 
-  CONCEPTOS.forEach((c, i) => aplicarEstadoPrevio(c, i));
-  actualizarResumen();
+  CONCEPTOS.forEach((c,i) => {
+    const prev = estadoActivo[c];
+    if(!prev) return;
+    if(prev.link){
+      const a = $('linkPrevio'+i);
+      a.href = prev.link; a.style.display = 'block';
+      $('btnEv'+i).textContent = '✓ evidencia';
+      $('btnEv'+i).classList.add('tiene');
+    }
+    if(prev.marcado) $('concepto'+i).classList.add('completo');
+  });
+
+  actualizarProgreso();
 }
 
-function aplicarEstadoPrevio(concepto, i){
-  const prev = estadoActual[concepto];
-  if(!prev) return;
-  if(prev.link){
-    const a = $('linkPrevio'+i);
-    a.href = prev.link;
-    a.style.display = 'block';
-  }
-  if(prev.marcado) marcar(i, true);
+function alternarCasilla(i){
+  $('concepto'+i).classList.toggle('completo');
+  actualizarProgreso();
 }
 
-function alternar(i){
+function alternarDetalle(i){
   $('concepto'+i).classList.toggle('abierto');
 }
 
-function tieneEvidencia(i){
-  const nota = $('nota'+i).value.trim();
-  const archivo = $('foto'+i).files[0];
-  const linkPrevio = $('linkPrevio'+i).style.display !== 'none';
-  return !!(nota || archivo || linkPrevio);
+function marcarTodos(valor){
+  CONCEPTOS.forEach((c,i) => $('concepto'+i).classList.toggle('completo', valor));
+  actualizarProgreso();
 }
 
-function evaluar(i){
-  marcar(i, tieneEvidencia(i));
+function revisarEvidencia(i){
+  const hay = $('nota'+i).value.trim() || $('foto'+i).files[0];
+  if(hay){
+    $('concepto'+i).classList.add('completo'); // la evidencia palomea automáticamente
+    $('btnEv'+i).classList.add('tiene');
+  }
+  actualizarProgreso();
 }
 
-function marcar(i, valor){
-  const el = $('concepto'+i);
-  el.classList.toggle('completo', valor);
-  $('insignia'+i).textContent = valor ? 'Con evidencia' : 'Pendiente';
-  actualizarResumen();
-}
-
-function actualizarResumen(){
-  const total = CONCEPTOS.length;
-  const hechos = document.querySelectorAll('.concepto.completo').length;
-  textoResumen.textContent = hechos + ' de ' + total;
-  barraProgreso.style.width = Math.round((hechos/total)*100) + '%';
+function actualizarProgreso(){
+  const hechos = document.querySelectorAll('#listaConceptos .concepto.completo').length;
+  $('textoProgreso').textContent = hechos + ' de ' + CONCEPTOS.length;
+  $('barraProgreso').style.width = Math.round(hechos/CONCEPTOS.length*100) + '%';
 }
 
 function cargarFoto(i){
-  const input = $('foto'+i);
-  const archivo = input.files[0];
+  const archivo = $('foto'+i).files[0];
   if(!archivo) return;
-
-  if(archivo.size > MAX_MB * 1024 * 1024){
-    aviso('La foto de ' + CONCEPTOS[i] + ' pesa más de ' + MAX_MB + ' MB; se comprimirá al guardar.', 'aviso');
-  }
-
   $('nombreArchivo'+i).textContent = archivo.name;
   const lector = new FileReader();
-  lector.onload = e => {
-    const img = $('previa'+i);
-    img.src = e.target.result;
-    img.style.display = 'block';
-  };
+  lector.onload = e => { const img = $('previa'+i); img.src = e.target.result; img.style.display = 'block'; };
   lector.readAsDataURL(archivo);
-  evaluar(i);
+  revisarEvidencia(i);
 }
 
-/* ── Compresión de imagen (para que no truene el POST) ─────────────── */
-
-function comprimirImagen(archivo, maxLado = 1600, calidad = 0.75){
+function comprimirImagen(archivo, maxLado = 1400, calidad = 0.72){
   return new Promise((resolve, reject) => {
     const lector = new FileReader();
     lector.onload = e => {
       const img = new Image();
       img.onload = () => {
-        let { width:w, height:h } = img;
-        if(Math.max(w,h) > maxLado){
-          const f = maxLado / Math.max(w,h);
-          w = Math.round(w*f); h = Math.round(h*f);
-        }
+        let w = img.width, h = img.height;
+        if(Math.max(w,h) > maxLado){ const f = maxLado/Math.max(w,h); w = Math.round(w*f); h = Math.round(h*f); }
         const lienzo = document.createElement('canvas');
         lienzo.width = w; lienzo.height = h;
         lienzo.getContext('2d').drawImage(img, 0, 0, w, h);
-        const dataUrl = lienzo.toDataURL('image/jpeg', calidad);
-        resolve({ base64: dataUrl.split(',')[1], tipo: 'image/jpeg' });
+        resolve({ base64: lienzo.toDataURL('image/jpeg', calidad).split(',')[1], tipo:'image/jpeg' });
       };
       img.onerror = () => reject(new Error('No se pudo procesar la imagen.'));
       img.src = e.target.result;
@@ -372,64 +572,38 @@ function comprimirImagen(archivo, maxLado = 1600, calidad = 0.75){
   });
 }
 
-/* ── Selección de cliente ──────────────────────────────────────────── */
+/* ── Overlay ───────────────────────────────────────────────────────── */
 
-filtroVendedor.addEventListener('change', pintarClientes);
-
-selectorCliente.addEventListener('change', async () => {
-  const c = clientes.find(x => x.codigo === selectorCliente.value);
-  estadoActual = {};
-
-  if(!c){
-    ficha.style.display = 'none';
-    resumen.style.display = 'none';
-    listaConceptos.innerHTML = '';
-    btnGuardar.disabled = true;
-    return;
-  }
-
-  ficha.style.display = 'block';
-  ficha.innerHTML = `
-    <div class="linea"><span class="etiqueta">Cliente</span><span>${escapar(c.nombre)}</span></div>
-    <div class="linea"><span class="etiqueta">Código</span><span><strong>${escapar(c.codigo)}</strong></span></div>
-    <div class="linea"><span class="etiqueta">Vendedor</span><span>${escapar(c.vendedor || '—')}</span></div>
-  `;
-  resumen.style.display = 'flex';
-  listaConceptos.innerHTML = '<p style="font-size:13px;color:#5a6b7a">Consultando lo ya registrado...</p>';
-  btnGuardar.disabled = true;
-  mensaje.style.display = 'none';
-
-  // Traer lo que ya está guardado en el Sheet para este cliente
-  try{
-    const resp = await fetch(APPS_SCRIPT_URL + '?accion=estado&codigo=' + encodeURIComponent(c.codigo));
-    const r = await resp.json();
-    if(r.ok && r.estado) estadoActual = r.estado;
-  }catch(err){
-    // Si falla, seguimos con el checklist en blanco
-  }
-
-  construirChecklist();
-  btnGuardar.disabled = false;
-});
-
-/* ── Guardado ──────────────────────────────────────────────────────── */
+function mostrarOverlay(estado, texto, subtexto){
+  const circulo = $('circulo');
+  circulo.className = 'circulo ' + (estado === 'ok' ? 'ok' : 'espera');
+  circulo.innerHTML = estado === 'ok'
+    ? '<svg viewBox="0 0 52 52"><path d="M14 27l8 8 16-18"/></svg>' : '';
+  $('textoOverlay').textContent = texto;
+  $('subtextoOverlay').textContent = subtexto || '';
+  $('overlay').classList.add('visible');
+}
+function ocultarOverlay(){ $('overlay').classList.remove('visible'); }
 
 function aviso(texto, tipo){
-  mensaje.textContent = texto;
-  mensaje.className = 'mensaje ' + tipo;
+  const m = $('mensaje');
+  m.textContent = texto;
+  m.className = 'mensaje ' + tipo;
 }
 
-btnGuardar.addEventListener('click', async () => {
-  const c = clientes.find(x => x.codigo === selectorCliente.value);
+/* ── Guardar ───────────────────────────────────────────────────────── */
+
+$('btnGuardar').addEventListener('click', async () => {
+  const c = clienteActivo;
   if(!c) return;
 
-  btnGuardar.disabled = true;
-  cargando.style.display = 'block';
-  mensaje.style.display = 'none';
+  $('btnGuardar').disabled = true;
+  $('mensaje').style.display = 'none';
+  mostrarOverlay('espera', 'Guardando...', 'Subiendo evidencias');
 
   try{
     const conceptos = [];
-    for(let i = 0; i < CONCEPTOS.length; i++){
+    for(let i=0; i<CONCEPTOS.length; i++){
       const item = {
         concepto: CONCEPTOS[i],
         nota: $('nota'+i).value.trim(),
@@ -445,44 +619,54 @@ btnGuardar.addEventListener('click', async () => {
       conceptos.push(item);
     }
 
-    const carga = {
-      codigo: c.codigo,
-      nombre: c.nombre,
-      vendedor: c.vendedor,
-      capturadoPor: capturadoPor.value.trim(),
-      conceptos: conceptos
-    };
-
     const resp = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(carga)
+      method:'POST',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        codigo: c.codigo, nombre: c.nombre, vendedor: c.vendedor,
+        capturadoPor: $('capturadoPor').value.trim(), conceptos: conceptos
+      })
     });
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
     const r = await resp.json();
     if(!r.ok) throw new Error(r.error || 'Error en el servidor.');
 
-    estadoActual = r.estado || {};
-    aviso('Guardado: ' + c.nombre + ' — ' + r.completos + ' de ' + r.total + ' requisitos con evidencia.', 'exito');
+    resumenGuardado[c.codigo] = r.estado || {};
+    actualizarTarjetas();
+    pintarLista();
 
-    // Limpiar archivos ya subidos y reflejar los links nuevos
-    CONCEPTOS.forEach((cn, i) => {
-      $('foto'+i).value = '';
-      $('nombreArchivo'+i).textContent = '';
-      $('previa'+i).style.display = 'none';
-      const prev = estadoActual[cn];
-      const a = $('linkPrevio'+i);
-      if(prev && prev.link){ a.href = prev.link; a.style.display = 'block'; }
-    });
+    mostrarOverlay('ok', 'Guardado', c.nombre + ' — ' + r.completos + ' de ' + r.total + ' requisitos');
+    setTimeout(() => { ocultarOverlay(); irAPanel(); }, 1400);
 
   }catch(err){
-    aviso('Error al guardar: ' + err.message, 'error');
+    ocultarOverlay();
+    aviso('No se pudo guardar: ' + err.message + '. Revisa el diagnóstico en la pantalla principal.', 'error');
   }finally{
-    cargando.style.display = 'none';
-    btnGuardar.disabled = false;
+    $('btnGuardar').disabled = false;
   }
 });
 
-cargarClientes();
+/* ── Diagnóstico ───────────────────────────────────────────────────── */
+
+function pintarDiagnostico(){
+  const marca = e => e === 'ok' ? '<span class="ok">OK</span>' : (e === 'error' ? '<span class="mal">FALLA</span>' : '—');
+  $('contenidoDiag').innerHTML = `
+    <div class="fila-d"><span>Lista de clientes (Google Sheets CSV)</span>${marca(diagnostico.csv)}</div>
+    <div class="fila-d"><code>${escapar(diagnostico.detalleCsv)}</code></div>
+    <div class="fila-d"><span>Conexión con Apps Script</span>${marca(diagnostico.script)}</div>
+    <div class="fila-d"><code>${escapar(diagnostico.detalleScript)}</code></div>
+    <div class="fila-d"><code>${escapar(APPS_SCRIPT_URL)}</code></div>`;
+  if(diagnostico.csv === 'error' || diagnostico.script === 'error') $('diagnostico').open = true;
+}
+
+/* ── Arranque ──────────────────────────────────────────────────────── */
+
+(async function iniciar(){
+  await Promise.all([cargarClientes(), cargarResumen()]);
+  actualizarTarjetas();
+  pintarLista();
+  pintarDiagnostico();
+})();
 </script>
 
 </body>
