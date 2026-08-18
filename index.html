@@ -15,10 +15,7 @@
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; padding:0;}
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-    background:var(--fondo); color:var(--texto); font-size:15px; line-height:1.45;
-  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; background:var(--fondo); color:var(--texto); font-size:15px; line-height:1.45;}
   .app{max-width:760px; margin:0 auto; background:#fff; min-height:100vh;}
 
   .barra{background:var(--azul); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:20;}
@@ -29,7 +26,10 @@
   .pantalla{display:none; padding:16px;}
   .pantalla.activa{display:block;}
 
-  .tarjetas{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:16px;}
+  .contexto{font-size:12.5px; color:var(--tenue); margin-bottom:9px; padding:8px 12px; background:var(--azul-claro); border-radius:8px; display:none;}
+  .contexto strong{color:var(--azul);}
+
+  .tarjetas{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:14px;}
   .tarjeta{border-radius:10px; padding:12px 10px; text-align:center; border:1px solid var(--borde); background:#fafbfc; cursor:pointer;}
   .tarjeta:active{transform:scale(.97);}
   .tarjeta.activa{box-shadow:0 0 0 2px var(--azul) inset;}
@@ -38,12 +38,8 @@
   .tarjeta.total .n{color:var(--azul);} .tarjeta.ok .n{color:var(--verde);} .tarjeta.falta .n{color:var(--ambar);}
 
   .filtros{display:flex; flex-direction:column; gap:9px; margin-bottom:14px;}
-  input[type=search], select, input[type=text]{
-    width:100%; padding:11px 12px; border:1px solid var(--borde); border-radius:8px;
-    font-size:16px; background:#fff; font-family:inherit; color:var(--texto); -webkit-appearance:none; appearance:none;
-  }
-  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a89' stroke-width='2' fill='none'/%3E%3C/svg%3E");
-    background-repeat:no-repeat; background-position:right 12px center; padding-right:34px;}
+  input[type=search], select, input[type=text]{width:100%; padding:11px 12px; border:1px solid var(--borde); border-radius:8px; font-size:16px; background:#fff; font-family:inherit; color:var(--texto); -webkit-appearance:none; appearance:none;}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a89' stroke-width='2' fill='none'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:34px;}
   .conteo-lista{font-size:12.5px; color:var(--tenue); margin-bottom:8px;}
 
   .cliente{display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid var(--borde); border-radius:10px; margin-bottom:8px; cursor:pointer; background:#fff;}
@@ -83,12 +79,19 @@
   .detalle{display:none; padding:0 14px 14px; border-top:1px dashed var(--borde);}
   .concepto.abierto .detalle{display:block;}
   .detalle textarea{width:100%; min-height:58px; padding:10px; border:1px solid var(--borde); border-radius:8px; font-size:16px; font-family:inherit; resize:vertical; margin-top:11px; color:var(--texto);}
-  .fila-archivo{display:flex; align-items:center; gap:10px; margin-top:9px; flex-wrap:wrap;}
+  .fila-archivo{display:flex; align-items:center; gap:8px; margin-top:9px; flex-wrap:wrap;}
   .btn-foto{padding:9px 14px; background:#fff; border:1px solid var(--azul); color:var(--azul); border-radius:8px; font-size:13px; cursor:pointer; font-weight:600; display:inline-block;}
+  .btn-quitar{padding:9px 12px; background:#fff; border:1px solid var(--rojo); color:var(--rojo); border-radius:8px; font-size:12.5px; cursor:pointer; font-weight:600; font-family:inherit; display:none;}
   .detalle input[type=file]{display:none;}
   .nombre-archivo{font-size:12px; color:var(--tenue);}
   .previa{max-height:130px; border-radius:8px; margin-top:9px; display:none;}
-  .link-previo{font-size:12.5px; margin-top:9px; display:none; color:var(--azul-2); font-weight:600;}
+  .caja-registrada{display:none; margin-top:10px; padding:9px 11px; background:#fff; border:1px solid var(--borde); border-radius:8px; align-items:center; gap:10px; font-size:12.5px;}
+  .caja-registrada.visible{display:flex;}
+  .caja-registrada a{color:var(--azul-2); font-weight:600; flex:1; text-decoration:none;}
+  .caja-registrada.borrada{background:var(--rojo-suave); border-color:var(--rojo);}
+  .caja-registrada.borrada a{color:var(--tenue); text-decoration:line-through; pointer-events:none;}
+  .btn-borrar-reg{background:none; border:1px solid var(--rojo); color:var(--rojo); border-radius:6px; padding:5px 10px; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit; flex-shrink:0;}
+  .btn-borrar-reg.deshacer{border-color:var(--tenue); color:var(--tenue);}
 
   .pie{position:sticky; bottom:0; background:#fff; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid var(--borde); margin:16px -16px -16px;}
   button.principal{width:100%; padding:15px; background:var(--azul); color:#fff; border:none; border-radius:10px; font-size:15.5px; font-weight:700; cursor:pointer; font-family:inherit;}
@@ -101,7 +104,7 @@
 
   .overlay{position:fixed; inset:0; background:rgba(20,35,50,.6); display:none; align-items:center; justify-content:center; z-index:100; padding:24px;}
   .overlay.visible{display:flex;}
-  .caja-overlay{background:#fff; border-radius:16px; padding:30px 28px; text-align:center; max-width:320px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,.25);}
+  .caja-overlay{background:#fff; border-radius:16px; padding:30px 28px; text-align:center; max-width:330px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,.25);}
   .circulo{width:74px; height:74px; border-radius:50%; margin:0 auto 16px; display:flex; align-items:center; justify-content:center;}
   .circulo.ok{background:var(--verde); animation:brote .35s ease-out;}
   .circulo.mal{background:var(--rojo); animation:brote .35s ease-out; color:#fff; font-size:38px; font-weight:700;}
@@ -112,7 +115,7 @@
   @keyframes trazo{to{stroke-dashoffset:0;}}
   @keyframes girar{to{transform:rotate(360deg);}}
   .texto-overlay{font-size:16.5px; font-weight:700;}
-  .subtexto-overlay{font-size:13px; color:var(--tenue); margin-top:6px;}
+  .subtexto-overlay{font-size:13px; color:var(--tenue); margin-top:6px; word-break:break-word;}
   .btn-cerrar-overlay{margin-top:16px; padding:10px 18px; border:1px solid var(--borde); background:#fff; border-radius:8px; font-size:13.5px; font-weight:600; cursor:pointer; display:none; font-family:inherit;}
 
   .carga-inicial{text-align:center; padding:60px 20px; color:var(--tenue);}
@@ -136,6 +139,14 @@
 
   <!-- PANEL -->
   <div class="pantalla" id="pantallaPanel">
+
+    <div class="filtros">
+      <select id="filtroVendedor"><option value="">Todos los vendedores</option></select>
+      <input type="search" id="busqueda" placeholder="Buscar por nombre o código..." autocomplete="off">
+    </div>
+
+    <div class="contexto" id="contexto"></div>
+
     <div class="tarjetas">
       <div class="tarjeta total" data-filtro="todos" onclick="filtrarPorTarjeta('todos')">
         <div class="n" id="nTotal">—</div><div class="t">Clientes</div>
@@ -149,8 +160,6 @@
     </div>
 
     <div class="filtros">
-      <input type="search" id="busqueda" placeholder="Buscar por nombre o código..." autocomplete="off">
-      <select id="filtroVendedor"><option value="">Todos los vendedores</option></select>
       <select id="filtroEstado">
         <option value="todos">Todos los estatus</option>
         <option value="completos">Solo completos</option>
@@ -199,18 +208,19 @@
 
 <script>
 /* =====================================================================
-   CONFIGURACIÓN — única línea que puede necesitar cambio
+   CONFIGURACIÓN
    ===================================================================== */
 var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznVrR76WHv2IaxYf64CKav_z8bhTkw8T7XNcG5CtbKFOqay8NIZGw69tpF0F1uWh_Q/exec";
 /* ===================================================================== */
 
-var LIMITE_FOTO = 75000;      // ms de espera por foto
-var LIMITE_NORMAL = 40000;    // ms para datos y guardado
+var LIMITE_FOTO = 75000;
+var LIMITE_NORMAL = 40000;
 
 var CONCEPTOS = [];
 var clientes = [];
 var clienteActivo = null;
 var guardando = false;
+var borrados = {};   // indice de concepto -> true si se marcó para borrar evidencia
 
 function $(id){ return document.getElementById(id); }
 function escapar(t){
@@ -220,21 +230,19 @@ function escapar(t){
 }
 function norm(t){ return String(t||'').trim().toUpperCase(); }
 
-/* ── Petición con tiempo límite y mensajes claros ──────────────────── */
+/* ── Peticiones ────────────────────────────────────────────────────── */
 
 function peticion(url, opciones, limite){
   opciones = opciones || {};
   limite = limite || LIMITE_NORMAL;
-
   return new Promise(function(resolver, rechazar){
     var abortado = false;
     var control = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     if(control) opciones.signal = control.signal;
-
     var reloj = setTimeout(function(){
       abortado = true;
       if(control) control.abort();
-      rechazar(new Error('Se agotó el tiempo de espera (' + Math.round(limite/1000) + 's). Revisa la conexión.'));
+      rechazar(new Error('Se agotó el tiempo de espera (' + Math.round(limite/1000) + 's).'));
     }, limite);
 
     fetch(url, opciones).then(function(resp){
@@ -245,16 +253,14 @@ function peticion(url, opciones, limite){
       if(abortado) return;
       var json;
       try{ json = JSON.parse(texto); }
-      catch(e){
-        throw new Error('El servidor no devolvió datos válidos. Revisa que el despliegue esté en "Cualquier usuario".');
-      }
+      catch(e){ throw new Error('El servidor no devolvió datos válidos. Revisa que el despliegue esté en "Cualquier usuario".'); }
       if(!json.ok) throw new Error(json.error || 'Error en el servidor.');
       resolver(json);
     }).catch(function(err){
       clearTimeout(reloj);
       if(abortado) return;
       if(err.name === 'AbortError') rechazar(new Error('Se agotó el tiempo de espera.'));
-      else if(err.message === 'Failed to fetch') rechazar(new Error('No se pudo contactar al servidor. Revisa tu conexión a internet.'));
+      else if(err.message === 'Failed to fetch') rechazar(new Error('No se pudo contactar al servidor. Revisa tu conexión.'));
       else rechazar(err);
     });
   });
@@ -291,21 +297,18 @@ function iniciar(){
       m.className = 'mensaje aviso';
     }
 
-    actualizarTarjetas();
-    pintarLista();
+    refrescarPanel();
   })
   .catch(function(err){
     $('cargaInicial').innerHTML =
       '<div style="color:#c62828; font-weight:700; font-size:16px">No se pudieron cargar los datos</div>' +
-      '<div style="margin-top:10px; font-size:13.5px; max-width:420px; margin-left:auto; margin-right:auto">' +
-        escapar(err.message) + '</div>' +
+      '<div style="margin-top:10px; font-size:13.5px; max-width:420px; margin-left:auto; margin-right:auto">' + escapar(err.message) + '</div>' +
       '<button class="btn-reintentar" onclick="iniciar()">Reintentar</button>' +
-      '<div style="margin-top:18px; font-size:11px; word-break:break-all; color:#8a99a8">' +
-        escapar(APPS_SCRIPT_URL) + '</div>';
+      '<div style="margin-top:18px; font-size:11px; word-break:break-all; color:#8a99a8">' + escapar(APPS_SCRIPT_URL) + '</div>';
   });
 }
 
-/* ── Estatus ───────────────────────────────────────────────────────── */
+/* ── Estatus y panel ───────────────────────────────────────────────── */
 
 function conteoCliente(c){
   var n = 0;
@@ -313,20 +316,41 @@ function conteoCliente(c){
   return n;
 }
 
-function actualizarTarjetas(){
-  var completos = clientes.filter(function(c){ return conteoCliente(c) === CONCEPTOS.length; }).length;
-  $('nTotal').textContent = clientes.length;
+/** Clientes del vendedor seleccionado (o todos). Es la base de TODO el panel. */
+function universo(){
+  var v = $('filtroVendedor').value;
+  return v ? clientes.filter(function(c){ return c.vendedor === v; }) : clientes;
+}
+
+function refrescarPanel(){
+  var base = universo();
+  var v = $('filtroVendedor').value;
+
+  var completos = base.filter(function(c){ return conteoCliente(c) === CONCEPTOS.length; }).length;
+  $('nTotal').textContent = base.length;
   $('nCompletos').textContent = completos;
-  $('nPendientes').textContent = clientes.length - completos;
+  $('nPendientes').textContent = base.length - completos;
+
+  var ctx = $('contexto');
+  if(v){
+    var pct = base.length ? Math.round(completos/base.length*100) : 0;
+    ctx.style.display = 'block';
+    ctx.innerHTML = 'Vendedor <strong>' + escapar(v) + '</strong>: ' + base.length +
+      ' clientes, ' + completos + ' con expediente completo (' + pct + '%), ' +
+      (base.length - completos) + ' por completar.';
+  }else{
+    ctx.style.display = 'none';
+  }
+
+  pintarLista();
 }
 
 function pintarLista(){
   var texto = norm($('busqueda').value);
-  var vend = $('filtroVendedor').value;
   var est = $('filtroEstado').value;
+  var base = universo();
 
-  var lista = clientes.filter(function(c){
-    if(vend && c.vendedor !== vend) return false;
+  var lista = base.filter(function(c){
     if(texto && norm(c.nombre).indexOf(texto) === -1 && norm(c.codigo).indexOf(texto) === -1) return false;
     var n = conteoCliente(c);
     if(est === 'completos'  && n !== CONCEPTOS.length) return false;
@@ -335,9 +359,9 @@ function pintarLista(){
     return true;
   });
 
-  $('conteoLista').textContent = lista.length === clientes.length
+  $('conteoLista').textContent = lista.length === base.length
     ? 'Mostrando ' + lista.length + ' clientes'
-    : 'Mostrando ' + lista.length + ' de ' + clientes.length + ' clientes';
+    : 'Mostrando ' + lista.length + ' de ' + base.length + ' clientes';
 
   if(!lista.length){
     $('listaClientes').innerHTML = '<div class="vacio-lista">No hay clientes con esos filtros.</div>';
@@ -367,10 +391,9 @@ function filtrarPorTarjeta(cual){
   pintarLista();
 }
 
-['busqueda','filtroVendedor','filtroEstado'].forEach(function(id){
-  $(id).addEventListener('input', pintarLista);
-  $(id).addEventListener('change', pintarLista);
-});
+$('filtroVendedor').addEventListener('change', refrescarPanel);
+$('busqueda').addEventListener('input', pintarLista);
+$('filtroEstado').addEventListener('change', pintarLista);
 
 /* ── Navegación ────────────────────────────────────────────────────── */
 
@@ -390,6 +413,7 @@ function abrirCliente(codigo){
   clientes.forEach(function(x){ if(x.codigo === codigo) c = x; });
   if(!c) return;
   clienteActivo = c;
+  borrados = {};
 
   $('pantallaPanel').classList.remove('activa');
   $('pantallaCliente').classList.add('activa');
@@ -420,10 +444,14 @@ function construirChecklist(){
         '<div class="fila-archivo">' +
           '<label class="btn-foto" for="foto'+i+'">Adjuntar foto</label>' +
           '<input type="file" id="foto'+i+'" accept="image/*" onchange="cargarFoto('+i+')">' +
+          '<button class="btn-quitar" id="btnQuitar'+i+'" onclick="quitarAdjunto('+i+')">Quitar</button>' +
           '<span class="nombre-archivo" id="nombreArchivo'+i+'"></span>' +
         '</div>' +
         '<img class="previa" id="previa'+i+'">' +
-        '<a class="link-previo" id="linkPrevio'+i+'" target="_blank" rel="noopener">Ver evidencia registrada &#8599;</a>' +
+        '<div class="caja-registrada" id="cajaReg'+i+'">' +
+          '<a id="linkPrevio'+i+'" target="_blank" rel="noopener">Evidencia ya registrada &#8599;</a>' +
+          '<button class="btn-borrar-reg" id="btnBorrarReg'+i+'" onclick="alternarBorrado('+i+')">Borrar</button>' +
+        '</div>' +
       '</div></div>';
   }).join('');
 
@@ -431,8 +459,8 @@ function construirChecklist(){
     var prev = clienteActivo.estado[c];
     if(!prev) return;
     if(prev.link){
-      var a = $('linkPrevio'+i);
-      a.href = prev.link; a.style.display = 'block';
+      $('linkPrevio'+i).href = prev.link;
+      $('cajaReg'+i).classList.add('visible');
       $('btnEv'+i).textContent = '✓ evidencia';
       $('btnEv'+i).classList.add('tiene');
     }
@@ -451,8 +479,42 @@ function marcarTodos(v){
   actualizarProgreso();
 }
 
+/** Quita la foto que se acaba de adjuntar (aún no subida) y limpia el comentario. */
+function quitarAdjunto(i){
+  $('foto'+i).value = '';
+  $('nombreArchivo'+i).textContent = '';
+  $('previa'+i).style.display = 'none';
+  $('previa'+i).src = '';
+  $('nota'+i).value = '';
+  $('btnQuitar'+i).style.display = 'none';
+  if(!$('cajaReg'+i).classList.contains('visible')){
+    $('btnEv'+i).textContent = '+ evidencia';
+    $('btnEv'+i).classList.remove('tiene');
+  }
+  actualizarProgreso();
+}
+
+/** Marca (o desmarca) la evidencia YA guardada para borrarse al guardar. */
+function alternarBorrado(i){
+  var caja = $('cajaReg'+i);
+  var boton = $('btnBorrarReg'+i);
+  if(borrados[i]){
+    delete borrados[i];
+    caja.classList.remove('borrada');
+    boton.textContent = 'Borrar';
+    boton.classList.remove('deshacer');
+  }else{
+    borrados[i] = true;
+    caja.classList.add('borrada');
+    boton.textContent = 'Deshacer';
+    boton.classList.add('deshacer');
+  }
+}
+
 function revisarEvidencia(i){
-  if($('nota'+i).value.trim() || $('foto'+i).files[0]){
+  var hayLocal = $('nota'+i).value.trim() || $('foto'+i).files[0];
+  $('btnQuitar'+i).style.display = hayLocal ? 'inline-block' : 'none';
+  if(hayLocal){
     $('concepto'+i).classList.add('completo');
     $('btnEv'+i).classList.add('tiene');
   }
@@ -554,11 +616,13 @@ function guardar(){
 
   var items = CONCEPTOS.map(function(nombre, i){
     return {
+      indice: i,
       concepto: nombre,
       nota: $('nota'+i).value.trim(),
       marcado: $('concepto'+i).classList.contains('completo'),
       archivo: $('foto'+i).files[0] || null,
-      link: (c.estado[nombre] && c.estado[nombre].link) || '',
+      link: borrados[i] ? '' : ((c.estado[nombre] && c.estado[nombre].link) || ''),
+      borrarEvidencia: !!borrados[i],
       esNuevo: false
     };
   });
@@ -581,6 +645,7 @@ function guardar(){
         }, 2);
       }).then(function(r){
         item.link = r.link;
+        item.borrarEvidencia = false; // una foto nueva reemplaza a la borrada
         item.esNuevo = true;
       });
     });
@@ -596,14 +661,17 @@ function guardar(){
       vendedor: c.vendedor,
       capturadoPor: $('capturadoPor').value.trim(),
       conceptos: items.map(function(x){
-        return { concepto:x.concepto, nota:x.nota, marcado:x.marcado, link:x.link, esNuevo:x.esNuevo };
+        return {
+          concepto:x.concepto, nota:x.nota, marcado:x.marcado,
+          link:x.link, esNuevo:x.esNuevo, borrarEvidencia:x.borrarEvidencia
+        };
       })
     }, LIMITE_NORMAL);
   }).then(function(respuesta){
     var r = respuesta.resultado;
     c.estado = r.estado || {};
-    actualizarTarjetas();
-    pintarLista();
+    borrados = {};
+    refrescarPanel();
     mostrarOverlay('ok', 'Guardado', c.nombre + ' — ' + r.completos + ' de ' + r.total + ' requisitos');
     setTimeout(function(){ ocultarOverlay(); irAPanel(); }, 1400);
   }).catch(function(err){
