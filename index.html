@@ -80,7 +80,9 @@
   .concepto.abierto .detalle{display:block;}
   .detalle textarea{width:100%; min-height:58px; padding:10px; border:1px solid var(--borde); border-radius:8px; font-size:16px; font-family:inherit; resize:vertical; margin-top:11px; color:var(--texto);}
   .fila-archivo{display:flex; align-items:center; gap:8px; margin-top:9px; flex-wrap:wrap;}
-  .btn-foto{padding:9px 14px; background:#fff; border:1px solid var(--azul); color:var(--azul); border-radius:8px; font-size:13px; cursor:pointer; font-weight:600; display:inline-block;}
+  .btn-foto{padding:9px 14px; background:#fff; border:1px solid var(--azul); color:var(--azul); border-radius:8px; font-size:13px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;}
+  .btn-foto.camara{background:var(--azul); color:#fff;}
+  .btn-foto svg{width:15px; height:15px; fill:currentColor; flex-shrink:0;}
   .btn-quitar{padding:9px 12px; background:#fff; border:1px solid var(--rojo); color:var(--rojo); border-radius:8px; font-size:12.5px; cursor:pointer; font-weight:600; font-family:inherit; display:none;}
   .detalle input[type=file]{display:none;}
   .nombre-archivo{font-size:12px; color:var(--tenue);}
@@ -465,8 +467,14 @@ function construirChecklist(){
       '<div class="detalle">' +
         '<textarea id="nota'+i+'" placeholder="Comentario u observación (opcional)" oninput="revisarEvidencia('+i+')"></textarea>' +
         '<div class="fila-archivo">' +
-          '<label class="btn-foto" for="foto'+i+'">Adjuntar foto</label>' +
-          '<input type="file" id="foto'+i+'" accept="image/*" onchange="cargarFoto('+i+')">' +
+          '<label class="btn-foto camara" for="camara'+i+'">' +
+            '<svg viewBox="0 0 24 24"><path d="M9 2L7.2 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2h-3.2L15 2H9zm3 5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zm0 2a3.5 3.5 0 100 7 3.5 3.5 0 000-7z"/></svg>' +
+            'Tomar foto</label>' +
+          '<input type="file" id="camara'+i+'" accept="image/*" capture="environment" onchange="cargarFoto('+i+',\'camara\')">' +
+          '<label class="btn-foto" for="foto'+i+'">' +
+            '<svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg>' +
+            'Galería</label>' +
+          '<input type="file" id="foto'+i+'" accept="image/*" onchange="cargarFoto('+i+',\'foto\')">' +
           '<button class="btn-quitar" id="btnQuitar'+i+'" onclick="quitarAdjunto('+i+')">Quitar</button>' +
           '<span class="nombre-archivo" id="nombreArchivo'+i+'"></span>' +
         '</div>' +
@@ -492,6 +500,21 @@ function construirChecklist(){
   actualizarProgreso();
 }
 
+/** Devuelve el archivo adjunto del concepto, venga de cámara o de galería. */
+function archivoDe(i){
+  var cam = $('camara'+i);
+  var gal = $('foto'+i);
+  if(cam && cam.files[0]) return cam.files[0];
+  if(gal && gal.files[0]) return gal.files[0];
+  return null;
+}
+
+/** Limpia los dos campos de archivo del concepto. */
+function limpiarArchivos(i){
+  if($('camara'+i)) $('camara'+i).value = '';
+  if($('foto'+i)) $('foto'+i).value = '';
+}
+
 function verEvidencia(i){
   var url = $('linkPrevio'+i).getAttribute('data-url');
   if(url) abrirVisor(url, CONCEPTOS[i]);
@@ -509,7 +532,7 @@ function marcarTodos(v){
 
 /** Quita la foto que se acaba de adjuntar (aún no subida) y limpia el comentario. */
 function quitarAdjunto(i){
-  $('foto'+i).value = '';
+  limpiarArchivos(i);
   $('nombreArchivo'+i).textContent = '';
   $('previa'+i).style.display = 'none';
   $('previa'+i).src = '';
@@ -540,7 +563,7 @@ function alternarBorrado(i){
 }
 
 function revisarEvidencia(i){
-  var hayLocal = $('nota'+i).value.trim() || $('foto'+i).files[0];
+  var hayLocal = $('nota'+i).value.trim() || archivoDe(i);
   $('btnQuitar'+i).style.display = hayLocal ? 'inline-block' : 'none';
   if(hayLocal){
     $('concepto'+i).classList.add('completo');
@@ -555,10 +578,13 @@ function actualizarProgreso(){
   $('barraProgreso').style.width = Math.round(hechos/CONCEPTOS.length*100) + '%';
 }
 
-function cargarFoto(i){
-  var archivo = $('foto'+i).files[0];
+function cargarFoto(i, origen){
+  var archivo = $(origen + i).files[0];
   if(!archivo) return;
-  $('nombreArchivo'+i).textContent = archivo.name;
+  // Solo puede haber una foto por concepto: si venía de la otra fuente, se descarta
+  if(origen === 'camara' && $('foto'+i)) $('foto'+i).value = '';
+  if(origen === 'foto' && $('camara'+i)) $('camara'+i).value = '';
+  $('nombreArchivo'+i).textContent = (origen === 'camara' ? 'Foto tomada' : archivo.name);
   var lector = new FileReader();
   lector.onload = function(e){
     var img = $('previa'+i);
@@ -701,7 +727,7 @@ function guardar(){
       concepto: nombre,
       nota: $('nota'+i).value.trim(),
       marcado: $('concepto'+i).classList.contains('completo'),
-      archivo: $('foto'+i).files[0] || null,
+      archivo: archivoDe(i),
       link: borrados[i] ? '' : ((c.estado[nombre] && c.estado[nombre].link) || ''),
       borrarEvidencia: !!borrados[i],
       esNuevo: false
@@ -766,7 +792,7 @@ function guardar(){
       }else{
         caja.classList.remove('visible', 'borrada');
       }
-      $('foto'+i).value = '';
+      limpiarArchivos(i);
       $('nombreArchivo'+i).textContent = '';
       $('previa'+i).style.display = 'none';
       $('btnQuitar'+i).style.display = 'none';
