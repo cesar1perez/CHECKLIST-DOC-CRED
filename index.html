@@ -315,22 +315,25 @@
   <!-- ═══ ALTA ═══ -->
   <div class="pantalla" id="pAlta">
     <div class="seccion">Datos del alta</div>
-    <label class="campo" for="altaSupervisor">Tu nombre (quien da de alta)</label>
-    <input type="text" id="altaSupervisor" placeholder="Nombre del supervisor" autocomplete="name">
 
     <label class="campo" for="altaMes">Mes de la campaña</label>
     <input type="month" id="altaMes">
 
     <label class="campo" for="altaVendedor">Vendedor</label>
-    <select id="altaVendedor" onchange="alCambiarVendedorAlta()"><option value="">Selecciona un vendedor</option></select>
+    <select id="altaVendedor"><option value="">Selecciona un vendedor</option></select>
 
-    <label class="campo" for="altaBusqueda">Cliente</label>
-    <input type="search" id="altaBusqueda" placeholder="Escribe el nombre o código..." autocomplete="off" oninput="buscarClientes()">
-    <div class="sugerencias" id="sugerencias"></div>
-    <div class="ficha" id="altaFicha" style="display:none"></div>
+    <div class="seccion">Cliente</div>
+    <label class="campo" for="altaCodigo">Código de cliente</label>
+    <input type="text" id="altaCodigo" placeholder="Ej. 10452" autocomplete="off" oninput="revisarCliente()">
 
-    <div id="altaRequisitos" style="display:none">
+    <label class="campo" for="altaNombre">Nombre del cliente</label>
+    <input type="text" id="altaNombre" placeholder="Nombre completo" autocomplete="off" oninput="revisarCliente()">
+
+    <div class="mensaje" id="msgCatalogo"></div>
+
+    <div id="altaRequisitos">
       <div class="seccion">¿Qué documentación se requiere?</div>
+      <p class="desc" style="margin:-4px 0 10px">Deja en blanco los documentos que ya tienes y no necesitas del vendedor.</p>
       <div class="req-encabezado">
         <span class="hueco">Documento</span>
         <span class="col">Nuevo</span>
@@ -364,6 +367,7 @@
 
     <div class="contexto" id="lContexto"></div>
     <div id="listaAsignaciones"></div>
+    <button class="btn-secundario" id="btnCambiarVendedor" onclick="abrirVendedor()" style="display:none">Cambiar de vendedor</button>
   </div>
 
   <!-- ═══ DETALLE DE UN CLIENTE ═══ -->
@@ -378,10 +382,6 @@
       <button class="btn-mini" onclick="marcarTodos(false)">Limpiar</button>
     </div>
     <div id="dConceptos"></div>
-    <div id="dCaptura" style="margin-top:14px">
-      <label class="campo" for="dCapturadoPor">Quién captura</label>
-      <input type="text" id="dCapturadoPor" placeholder="Tu nombre" autocomplete="name">
-    </div>
     <div class="pie">
       <button class="principal" id="dGuardar" onclick="guardarDetalle()">Guardar</button>
       <button class="btn-secundario" id="dCerrar" onclick="pedirCierre()" style="display:none">Marcar documentación completa</button>
@@ -634,83 +634,22 @@ function entrarVendedor(){
   clave = '';
   vendedorActivo = v;
   prepararLista();
-  irA('pLista', true);
+  irA('pLista');
 }
 
 /* ── Alta ──────────────────────────────────────────────────────────── */
 
 function abrirAlta(){
-  clienteAlta = null;
   reqAlta = {};
-  $('altaBusqueda').value = '';
-  $('altaFicha').style.display = 'none';
-  $('altaRequisitos').style.display = 'none';
-  $('sugerencias').classList.remove('visible');
+  $('altaCodigo').value = '';
+  $('altaNombre').value = '';
   $('msgAlta').style.display = 'none';
+  $('msgCatalogo').style.display = 'none';
   if(!$('altaMes').value) $('altaMes').value = mesActual();
 
   $('altaVendedor').innerHTML = '<option value="">Selecciona un vendedor</option>' +
     vendedores.map(function(v){ return '<option value="'+escapar(v)+'">'+escapar(v)+'</option>'; }).join('');
 
-  irA('pAlta');
-}
-
-function alCambiarVendedorAlta(){
-  clienteAlta = null;
-  $('altaBusqueda').value = '';
-  $('altaFicha').style.display = 'none';
-  $('altaRequisitos').style.display = 'none';
-  $('sugerencias').classList.remove('visible');
-}
-
-function buscarClientes(){
-  var texto = norm($('altaBusqueda').value);
-  var vend = $('altaVendedor').value;
-  var caja = $('sugerencias');
-
-  if(texto.length < 2){ caja.classList.remove('visible'); return; }
-
-  var base = vend ? catalogo.filter(function(c){ return c.vendedor === vend; }) : catalogo;
-  var res = base.filter(function(c){
-    return norm(c.nombre).indexOf(texto) !== -1 || norm(c.codigo).indexOf(texto) !== -1;
-  }).slice(0, 40);
-
-  if(!res.length){
-    caja.innerHTML = '<div class="sug" style="color:#6b7a89">Sin coincidencias' +
-      (vend ? ' entre los clientes de ' + escapar(vend) : '') + '</div>';
-    caja.classList.add('visible');
-    return;
-  }
-
-  caja.innerHTML = res.map(function(c){
-    return '<div class="sug" data-codigo="'+escapar(c.codigo)+'">' +
-      escapar(c.nombre) + '<div class="cod">' + escapar(c.codigo) +
-      (c.vendedor ? ' · ' + escapar(c.vendedor) : '') + '</div></div>';
-  }).join('');
-  caja.classList.add('visible');
-
-  Array.prototype.forEach.call(caja.querySelectorAll('.sug[data-codigo]'), function(el){
-    el.addEventListener('click', function(){ elegirClienteAlta(el.getAttribute('data-codigo')); });
-  });
-}
-
-function elegirClienteAlta(codigo){
-  var c = null;
-  catalogo.forEach(function(x){ if(x.codigo === codigo) c = x; });
-  if(!c) return;
-
-  clienteAlta = c;
-  if(!$('altaVendedor').value && c.vendedor) $('altaVendedor').value = c.vendedor;
-
-  $('altaBusqueda').value = c.nombre;
-  $('sugerencias').classList.remove('visible');
-  $('altaFicha').style.display = 'block';
-  $('altaFicha').innerHTML =
-    '<div class="linea"><span class="etiqueta">Cliente</span><span class="valor">'+escapar(c.nombre)+'</span></div>' +
-    '<div class="linea"><span class="etiqueta">Código</span><span class="valor"><strong>'+escapar(c.codigo)+'</strong></span></div>' +
-    '<div class="linea"><span class="etiqueta">Vendedor</span><span class="valor">'+escapar(c.vendedor || '—')+'</span></div>';
-
-  reqAlta = {};
   $('listaReq').innerHTML = CONCEPTOS.map(function(nombre,i){
     return '<div class="req" id="req'+i+'">' +
       '<span class="nom">'+escapar(nombre)+'</span>' +
@@ -719,15 +658,32 @@ function elegirClienteAlta(codigo){
       '</div>';
   }).join('');
 
-  $('altaRequisitos').style.display = 'block';
-  $('msgAlta').style.display = 'none';
+  irA('pAlta');
+}
+
+/** Si el código escrito ya existe en el catálogo, autocompleta el nombre. */
+function revisarCliente(){
+  var codigo = $('altaCodigo').value.trim();
+  var caja = $('msgCatalogo');
+  if(!codigo){ caja.style.display = 'none'; return; }
+
+  var enCatalogo = null;
+  catalogo.forEach(function(c){ if(c.codigo === codigo) enCatalogo = c; });
+
+  if(enCatalogo){
+    if(!$('altaNombre').value.trim()) $('altaNombre').value = enCatalogo.nombre;
+    aviso('msgCatalogo', 'Cliente encontrado en el catálogo: ' + enCatalogo.nombre +
+          (enCatalogo.vendedor ? ' (vendedor ' + enCatalogo.vendedor + ')' : ''), 'exito');
+    if(!$('altaVendedor').value && enCatalogo.vendedor) $('altaVendedor').value = enCatalogo.vendedor;
+  }else{
+    aviso('msgCatalogo', 'Cliente nuevo: no está en el catálogo, se dará de alta con los datos que escribas.', 'aviso');
+  }
 }
 
 function marcarReq(i, tipo){
   var nombre = CONCEPTOS[i];
   var actual = reqAlta[nombre] || '';
   reqAlta[nombre] = (actual === tipo) ? '' : tipo;
-
   $('mNuevo'+i).classList.toggle('on', reqAlta[nombre] === 'NUEVO');
   $('mAct'+i).classList.toggle('on', reqAlta[nombre] === 'ACTUALIZAR');
   $('req'+i).classList.toggle('pedido', !!reqAlta[nombre]);
@@ -735,44 +691,48 @@ function marcarReq(i, tipo){
 
 function guardarAlta(){
   if(ocupado) return;
-  var supervisor = $('altaSupervisor').value.trim();
   var mes = $('altaMes').value;
   var vend = $('altaVendedor').value;
+  var codigo = $('altaCodigo').value.trim();
+  var nombre = $('altaNombre').value.trim();
 
-  if(!supervisor){ aviso('msgAlta','Escribe tu nombre como supervisor.','error'); return; }
   if(!mes){ aviso('msgAlta','Selecciona el mes.','error'); return; }
   if(!vend){ aviso('msgAlta','Selecciona el vendedor.','error'); return; }
-  if(!clienteAlta){ aviso('msgAlta','Selecciona un cliente.','error'); return; }
+  if(!codigo){ aviso('msgAlta','Escribe el código del cliente.','error'); return; }
+  if(!nombre){ aviso('msgAlta','Escribe el nombre del cliente.','error'); return; }
 
   var pedidos = CONCEPTOS.filter(function(c){ return reqAlta[c]; });
   if(!pedidos.length){ aviso('msgAlta','Marca al menos un documento como Nuevo o Actualizar.','error'); return; }
 
   ocupado = true;
-  mostrarOverlay('espera','Dando de alta...', clienteAlta.nombre);
+  mostrarOverlay('espera','Dando de alta...', nombre);
 
   enviar({
-    accion:'crearAsignacion', clave: clave, mes: mes, supervisor: supervisor,
-    vendedor: vend, codigo: clienteAlta.codigo, nombre: clienteAlta.nombre, req: reqAlta
+    accion:'crearAsignacion', clave: clave, mes: mes, supervisor: '',
+    vendedor: vend, codigo: codigo, nombre: nombre, req: reqAlta
   }).then(function(r){
     ocupado = false;
     if(r.resultado.duplicado){
-      mostrarOverlay('mal','Ya existe', r.resultado.mensaje, [
-        {texto:'Entendido', accion: ocultarOverlay}
-      ]);
-      return;
+      mostrarOverlay('mal','Ya existe', r.resultado.mensaje, [{texto:'Entendido', accion: ocultarOverlay}]);
+      return null;
     }
-    return cargar().then(function(){
-      mostrarOverlay('ok','Cliente dado de alta',
-        clienteAlta.nombre + ' — ' + pedidos.length + ' documentos solicitados');
-      setTimeout(function(){
-        ocultarOverlay();
-        $('altaBusqueda').value = '';
-        $('altaFicha').style.display = 'none';
-        $('altaRequisitos').style.display = 'none';
-        clienteAlta = null; reqAlta = {};
-        actualizarResumenSupervisor();
-      }, 1500);
-    });
+    return cargar();
+  }).then(function(hecho){
+    if(hecho === null || hecho === undefined) return;
+    mostrarOverlay('ok','Cliente dado de alta', nombre + ' — ' + pedidos.length + ' documentos solicitados');
+    setTimeout(function(){
+      ocultarOverlay();
+      $('altaCodigo').value = '';
+      $('altaNombre').value = '';
+      $('msgCatalogo').style.display = 'none';
+      reqAlta = {};
+      CONCEPTOS.forEach(function(c,i){
+        $('mNuevo'+i).classList.remove('on');
+        $('mAct'+i).classList.remove('on');
+        $('req'+i).classList.remove('pedido');
+      });
+      actualizarResumenSupervisor();
+    }, 1500);
   }).catch(function(err){
     ocupado = false;
     ocultarOverlay();
@@ -792,9 +752,11 @@ function prepararLista(){
   asignaciones.forEach(function(a){ if(a.mes && meses.indexOf(a.mes) === -1) meses.push(a.mes); });
   meses.sort().reverse();
 
-  $('fMes').innerHTML = '<option value="">Todos los meses</option>' +
-    meses.map(function(m){ return '<option value="'+escapar(m)+'">'+escapar(nombreMes(m))+'</option>'; }).join('');
-  if(meses.length) $('fMes').value = meses[0];
+  if(!meses.length) meses = [mesActual()];
+  $('fMes').innerHTML = meses.map(function(m){
+    return '<option value="'+escapar(m)+'">'+escapar(nombreMes(m))+'</option>';
+  }).join('');
+  $('fMes').value = meses[0];
 
   if(rol === 'SUPERVISOR'){
     $('bloqueVendedor').style.display = 'block';
@@ -803,6 +765,7 @@ function prepararLista(){
   }else{
     $('bloqueVendedor').style.display = 'none';
   }
+  $('btnCambiarVendedor').style.display = (rol === 'VENDEDOR') ? 'block' : 'none';
 
   $('fBusqueda').value = '';
   pintarLista();
@@ -920,7 +883,6 @@ function abrirDetalle(id){
       escapar(a.fechaCompletado)+(a.cerradoPor?' · '+escapar(a.cerradoPor):'')+'</span></div>' : '');
 
   $('dAcciones').style.display = (esSup && !cerrado) ? 'flex' : 'none';
-  $('dCaptura').style.display = cerrado ? 'none' : 'block';
   $('dGuardar').style.display = cerrado ? 'none' : 'block';
   $('dGuardar').textContent = esSup ? 'Guardar validación' : 'Guardar evidencia';
   $('dGuardar').className = 'principal' + (esSup ? ' morado' : '');
@@ -964,26 +926,37 @@ function construirConceptos(a, esSup, cerrado){
     }
     if(ev.link){
       html += '<div class="caja-registrada visible" id="cajaReg'+i+'">' +
-        '<a id="linkPrevio'+i+'" data-url="'+escapar(ev.link)+'" onclick="verEvidencia('+i+')">Ver foto registrada</a>' +
+        '<a id="linkPrevio'+i+'" data-url="'+escapar(ev.link)+'" onclick="verEvidencia('+i+')">Ver evidencia registrada</a>' +
         (cerrado ? '' : '<button class="btn-borrar-reg" id="btnBorrarReg'+i+'" onclick="alternarBorrado('+i+')">Borrar</button>') +
         '</div>';
     }
 
     // Campos para agregar evidencia nueva
     if(!cerrado){
-      html += '<textarea id="nota'+i+'" placeholder="Agregar comentario u observación (opcional)" oninput="revisarEvidencia('+i+')"></textarea>' +
-        '<div class="fila-archivo">' +
+      html += '<div class="fila-archivo">' +
           '<label class="btn-foto camara" for="camara'+i+'">' +
             '<svg viewBox="0 0 24 24"><path d="M9 2L7.2 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2h-3.2L15 2H9zm3 5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zm0 2a3.5 3.5 0 100 7 3.5 3.5 0 000-7z"/></svg>' +
             'Tomar foto</label>' +
-          '<input type="file" id="camara'+i+'" accept="image/*" capture="environment" onchange="cargarFoto('+i+',\'camara\')">' +
+          '<input type="file" id="camara'+i+'" accept="image/*" capture="environment" onchange="cargarArchivo('+i+',\'camara\')">' +
+
           '<label class="btn-foto" for="foto'+i+'">' +
             '<svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg>' +
             'Galería</label>' +
-          '<input type="file" id="foto'+i+'" accept="image/*" onchange="cargarFoto('+i+',\'foto\')">' +
+          '<input type="file" id="foto'+i+'" accept="image/*" onchange="cargarArchivo('+i+',\'foto\')">' +
+
+          '<label class="btn-foto" for="pdf'+i+'">' +
+            '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm2 18H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>' +
+            'Documento PDF</label>' +
+          '<input type="file" id="pdf'+i+'" accept="application/pdf" onchange="cargarArchivo('+i+',\'pdf\')">' +
+
+          '<button class="btn-foto" id="btnComentario'+i+'" onclick="mostrarComentario('+i+')">' +
+            '<svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>' +
+            'Escribir comentario</button>' +
+
           '<button class="btn-quitar" id="btnQuitar'+i+'" onclick="quitarAdjunto('+i+')">Quitar</button>' +
-          '<span class="nombre-archivo" id="nombreArchivo'+i+'"></span>' +
         '</div>' +
+        '<div class="nombre-archivo" id="nombreArchivo'+i+'" style="margin-top:7px"></div>' +
+        '<textarea id="nota'+i+'" style="display:none" placeholder="Escribe el comentario u observación..." oninput="revisarEvidencia('+i+')"></textarea>' +
         '<img class="previa" id="previa'+i+'">';
     }
 
@@ -1021,29 +994,47 @@ function actualizarProgresoDetalle(){
 
 /* ── Evidencia ─────────────────────────────────────────────────────── */
 
+var FUENTES = ['camara','foto','pdf'];
+
 function archivoDe(i){
-  var cam = $('camara'+i), gal = $('foto'+i);
-  if(cam && cam.files[0]) return cam.files[0];
-  if(gal && gal.files[0]) return gal.files[0];
+  for(var k = 0; k < FUENTES.length; k++){
+    var el = $(FUENTES[k] + i);
+    if(el && el.files[0]) return el.files[0];
+  }
   return null;
 }
+
 function limpiarArchivos(i){
-  if($('camara'+i)) $('camara'+i).value = '';
-  if($('foto'+i)) $('foto'+i).value = '';
+  FUENTES.forEach(function(f){ if($(f+i)) $(f+i).value = ''; });
 }
 
-function cargarFoto(i, origen){
-  var archivo = $(origen + i).files[0];
+function mostrarComentario(i){
+  var t = $('nota'+i);
+  if(!t) return;
+  t.style.display = 'block';
+  t.focus();
+  $('btnComentario'+i).style.display = 'none';
+}
+
+function cargarArchivo(i, origen){
+  var campo = $(origen + i);
+  var archivo = campo.files[0];
   if(!archivo) return;
-  if(origen === 'camara' && $('foto'+i)) $('foto'+i).value = '';
-  if(origen === 'foto' && $('camara'+i)) $('camara'+i).value = '';
-  $('nombreArchivo'+i).textContent = (origen === 'camara' ? 'Foto tomada' : archivo.name);
-  var lector = new FileReader();
-  lector.onload = function(e){
-    var img = $('previa'+i);
-    img.src = e.target.result; img.style.display = 'block';
-  };
-  lector.readAsDataURL(archivo);
+
+  // Solo un archivo por concepto: limpia las otras fuentes
+  FUENTES.forEach(function(f){ if(f !== origen && $(f+i)) $(f+i).value = ''; });
+
+  var etiquetas = { camara:'Foto tomada', foto:archivo.name, pdf:archivo.name };
+  $('nombreArchivo'+i).textContent = etiquetas[origen] || archivo.name;
+
+  var previa = $('previa'+i);
+  if(origen === 'pdf'){
+    previa.style.display = 'none';
+  }else{
+    var lector = new FileReader();
+    lector.onload = function(e){ previa.src = e.target.result; previa.style.display = 'block'; };
+    lector.readAsDataURL(archivo);
+  }
   revisarEvidencia(i);
 }
 
@@ -1051,7 +1042,8 @@ function quitarAdjunto(i){
   limpiarArchivos(i);
   $('nombreArchivo'+i).textContent = '';
   if($('previa'+i)){ $('previa'+i).style.display = 'none'; $('previa'+i).src = ''; }
-  if($('nota'+i)) $('nota'+i).value = '';
+  if($('nota'+i)){ $('nota'+i).value = ''; $('nota'+i).style.display = 'none'; }
+  if($('btnComentario'+i)) $('btnComentario'+i).style.display = 'inline-flex';
   $('btnQuitar'+i).style.display = 'none';
 }
 
@@ -1072,6 +1064,22 @@ function alternarBorrado(i){
     caja.classList.add('borrada');
     boton.textContent = 'Deshacer'; boton.classList.add('deshacer');
   }
+}
+
+/** Lee un archivo tal cual (para PDF, que no se debe comprimir). */
+function leerComoBase64(archivo){
+  return new Promise(function(resolver, rechazar){
+    if(archivo.size > 9 * 1024 * 1024){
+      rechazar(new Error('El PDF pesa más de 9 MB. Comprímelo o divídelo antes de subirlo.'));
+      return;
+    }
+    var lector = new FileReader();
+    lector.onload = function(e){
+      resolver({ base64: e.target.result.split(',')[1], tipo: archivo.type || 'application/pdf' });
+    };
+    lector.onerror = function(){ rechazar(new Error('No se pudo leer el documento.')); };
+    lector.readAsDataURL(archivo);
+  });
 }
 
 function comprimirImagen(archivo){
@@ -1144,12 +1152,16 @@ function guardarDetalle(){
 
   conFoto.forEach(function(item, k){
     cadena = cadena.then(function(){
-      mostrarOverlay('espera', 'Subiendo foto ' + (k+1) + ' de ' + conFoto.length, item.concepto);
-      return comprimirImagen(item.archivo).then(function(comp){
+      var esPdf = item.archivo.type === 'application/pdf';
+      mostrarOverlay('espera', 'Subiendo ' + (esPdf ? 'documento ' : 'foto ') +
+                     (k+1) + ' de ' + conFoto.length, item.concepto);
+      var preparar = esPdf ? leerComoBase64(item.archivo) : comprimirImagen(item.archivo);
+      return preparar.then(function(comp){
         return subirConReintento({
           accion:'foto', codigo:a.codigo, nombre:a.nombre, concepto:item.concepto,
           fotoBase64:comp.base64, fotoTipo:comp.tipo,
-          fotoNombre: a.codigo + '_' + item.concepto.replace(/\s+/g,'_') + '_' + Date.now() + '.jpg'
+          fotoNombre: a.codigo + '_' + item.concepto.replace(/\s+/g,'_') + '_' + Date.now() +
+                      (esPdf ? '.pdf' : '.jpg')
         }, 2);
       }).then(function(r){
         item.link = r.link;
@@ -1165,7 +1177,7 @@ function guardarDetalle(){
     mostrarOverlay('espera', 'Guardando evidencia', a.nombre);
     return enviar({
       accion:'guardarEvidencia', id: a.id, rol: rol,
-      capturadoPor: $('dCapturadoPor').value.trim(),
+      capturadoPor: rol === 'SUPERVISOR' ? 'SUPERVISOR' : vendedorActivo,
       items: conEvidencia.map(function(x){
         return { concepto:x.concepto, nota:x.nota, link:x.link, borrar:x.borrar };
       })
@@ -1240,7 +1252,7 @@ function cerrarExpediente(forzar){
   enviar({ accion:'marcarCumplidos', clave: clave, id: a.id, cumplidos: cumplidos })
   .then(function(){
     return enviar({ accion:'cerrarAsignacion', clave: clave, id: a.id,
-                    supervisor: $('dCapturadoPor').value.trim(), forzar: !!forzar });
+                    supervisor: 'SUPERVISOR', forzar: !!forzar });
   })
   .then(function(r){
     if(!r.resultado.cerrado){
@@ -1298,13 +1310,26 @@ function abrirVisor(url, titulo){
            {cache:'no-store'}, 60000)
   .then(function(r){
     var src = 'data:' + (r.tipo || 'image/jpeg') + ';base64,' + r.base64;
-    $('visorCuerpo').innerHTML = '';
-    var img = new Image();
-    img.src = src; img.alt = r.nombre || 'Evidencia';
-    $('visorCuerpo').appendChild(img);
     $('visorTitulo').textContent = r.nombre || titulo || 'Evidencia';
+    $('visorCuerpo').innerHTML = '';
+
+    if((r.tipo || '').indexOf('pdf') !== -1){
+      $('visorCuerpo').innerHTML =
+        '<div class="visor-estado">' +
+        '<svg viewBox="0 0 24 24" style="width:56px;height:56px;fill:#c8d3dd"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm2 18H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>' +
+        '<div style="margin-top:12px">' + escapar(r.nombre || 'Documento PDF') + '</div>' +
+        '<div style="margin-top:6px;font-size:12.5px;opacity:.75">Usa el botón Descargar para abrirlo.</div>' +
+        '</div>';
+    }else{
+      var img = new Image();
+      img.src = src; img.alt = r.nombre || 'Evidencia';
+      $('visorCuerpo').appendChild(img);
+    }
+
     var d = $('visorDescargar');
-    d.href = src; d.setAttribute('download', r.nombre || 'evidencia.jpg');
+    d.href = src;
+    d.setAttribute('download', r.nombre || 'evidencia');
+    d.textContent = (r.tipo || '').indexOf('pdf') !== -1 ? 'Descargar PDF' : 'Descargar';
     d.style.display = 'inline-block';
   })
   .catch(function(err){
