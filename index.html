@@ -4,230 +4,410 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#1f4e78">
-<title>Checklist de Expediente — Clientes Mayoreo</title>
+<title>Cuentas por Cobrar — Documentación</title>
 <style>
   :root{
     --azul:#1f4e78; --azul-2:#2d6ca3; --azul-claro:#e3edf6;
     --verde:#2e7d32; --verde-suave:#e6f4ea;
     --ambar:#b26a00; --ambar-suave:#fff4e0;
+    --morado:#5b3f9e; --morado-suave:#efe9fb;
     --rojo:#c62828; --rojo-suave:#fdecea;
     --fondo:#eef1f4; --borde:#d3dbe3; --texto:#243746; --tenue:#6b7a89;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; padding:0;}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; background:var(--fondo); color:var(--texto); font-size:15px; line-height:1.45;}
-  .app{max-width:760px; margin:0 auto; background:#fff; min-height:100vh;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+       background:var(--fondo); color:var(--texto); font-size:15px; line-height:1.45;}
+  .app{max-width:800px; margin:0 auto; background:#fff; min-height:100vh;}
 
   .barra{background:var(--azul); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:20;}
-  .barra h1{margin:0; font-size:17px; font-weight:600; flex:1;}
-  .barra .sub{font-size:12px; opacity:.8; font-weight:400; display:block; margin-top:2px;}
+  .barra h1{margin:0; font-size:16.5px; font-weight:600; flex:1; min-width:0;}
+  .barra .sub{font-size:12px; opacity:.82; font-weight:400; display:block; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .barra.supervisor{background:var(--morado);}
+  .btn-barra{background:rgba(255,255,255,.18); border:none; color:#fff; padding:0 12px; height:34px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; flex-shrink:0; font-family:inherit;}
   .btn-atras{background:rgba(255,255,255,.18); border:none; color:#fff; width:34px; height:34px; border-radius:8px; font-size:18px; cursor:pointer; flex-shrink:0; line-height:1;}
 
   .pantalla{display:none; padding:16px;}
   .pantalla.activa{display:block;}
 
-  .contexto{font-size:12.5px; color:var(--tenue); margin-bottom:9px; padding:8px 12px; background:var(--azul-claro); border-radius:8px; display:none;}
-  .contexto strong{color:var(--azul);}
+  h2.titulo{font-size:15px; margin:0 0 4px; color:var(--azul);}
+  .desc{font-size:13px; color:var(--tenue); margin:0 0 16px;}
+  .seccion{font-size:11.5px; font-weight:700; color:var(--azul); text-transform:uppercase; letter-spacing:.4px; margin:20px 0 8px;}
+  .seccion:first-child{margin-top:0;}
 
+  label.campo{display:block; font-size:11.5px; font-weight:700; color:var(--azul); text-transform:uppercase; letter-spacing:.3px; margin-bottom:6px;}
+  input[type=search], input[type=text], input[type=password], input[type=month], select{
+    width:100%; padding:11px 12px; border:1px solid var(--borde); border-radius:8px;
+    font-size:16px; background:#fff; font-family:inherit; color:var(--texto);
+    -webkit-appearance:none; appearance:none; margin-bottom:13px;}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a89' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 12px center; padding-right:34px;}
+
+  /* Portada de roles */
+  .rol{display:flex; align-items:center; gap:15px; padding:20px 18px; border:1px solid var(--borde);
+       border-radius:13px; margin-bottom:13px; cursor:pointer; background:#fff;}
+  .rol:active{background:var(--azul-claro);}
+  .rol .icono{width:50px; height:50px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .rol .icono svg{width:26px; height:26px; fill:#fff;}
+  .rol.sup .icono{background:var(--morado);}
+  .rol.ven .icono{background:var(--azul);}
+  .rol .txt{flex:1;}
+  .rol .t1{font-size:16px; font-weight:700;}
+  .rol .t2{font-size:12.5px; color:var(--tenue); margin-top:3px;}
+  .rol .flecha{color:var(--tenue); font-size:19px;}
+
+  /* Tarjetas de estadística */
   .tarjetas{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:14px;}
-  .tarjeta{border-radius:10px; padding:12px 10px; text-align:center; border:1px solid var(--borde); background:#fafbfc; cursor:pointer;}
+  .tarjeta{border-radius:10px; padding:12px 8px; text-align:center; border:1px solid var(--borde); background:#fafbfc; cursor:pointer;}
   .tarjeta:active{transform:scale(.97);}
   .tarjeta.activa{box-shadow:0 0 0 2px var(--azul) inset;}
-  .tarjeta .n{font-size:24px; font-weight:700; line-height:1.1;}
-  .tarjeta .t{font-size:11px; color:var(--tenue); text-transform:uppercase; letter-spacing:.3px; margin-top:3px;}
+  .tarjeta .n{font-size:23px; font-weight:700; line-height:1.1;}
+  .tarjeta .t{font-size:10.5px; color:var(--tenue); text-transform:uppercase; letter-spacing:.3px; margin-top:3px;}
   .tarjeta.total .n{color:var(--azul);} .tarjeta.ok .n{color:var(--verde);} .tarjeta.falta .n{color:var(--ambar);}
 
-  .filtros{display:flex; flex-direction:column; gap:9px; margin-bottom:14px;}
-  input[type=search], select, input[type=text]{width:100%; padding:11px 12px; border:1px solid var(--borde); border-radius:8px; font-size:16px; background:#fff; font-family:inherit; color:var(--texto); -webkit-appearance:none; appearance:none;}
-  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a89' stroke-width='2' fill='none'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:34px;}
-  .conteo-lista{font-size:12.5px; color:var(--tenue); margin-bottom:8px;}
+  .contexto{font-size:12.5px; color:var(--tenue); margin-bottom:12px; padding:9px 12px; background:var(--azul-claro); border-radius:8px;}
+  .contexto strong{color:var(--azul);}
 
-  .cliente{display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid var(--borde); border-radius:10px; margin-bottom:8px; cursor:pointer; background:#fff;}
-  .cliente:active{background:var(--azul-claro);}
-  .cliente.completo{border-left:4px solid var(--verde);}
-  .cliente.parcial{border-left:4px solid var(--ambar);}
-  .cliente.vacio{border-left:4px solid var(--borde);}
-  .cliente .datos{flex:1; min-width:0;}
-  .cliente .nombre{font-weight:600; font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .cliente .meta{font-size:12px; color:var(--tenue); margin-top:2px;}
-  .pill{display:inline-block; font-size:12px; font-weight:700; padding:4px 9px; border-radius:12px; background:#e8edf2; color:var(--tenue);}
-  .cliente.completo .pill{background:var(--verde); color:#fff;}
-  .cliente.parcial .pill{background:var(--ambar-suave); color:var(--ambar);}
-  .vacio-lista{text-align:center; color:var(--tenue); padding:32px 16px; font-size:14px;}
+  /* Lista */
+  .item-lista{display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid var(--borde);
+              border-radius:10px; margin-bottom:8px; cursor:pointer; background:#fff;}
+  .item-lista:active{background:var(--azul-claro);}
+  .item-lista.completo{border-left:4px solid var(--verde);}
+  .item-lista.parcial{border-left:4px solid var(--ambar);}
+  .item-lista.vacio{border-left:4px solid var(--borde);}
+  .item-lista .datos{flex:1; min-width:0;}
+  .item-lista .nombre{font-weight:600; font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .item-lista .meta{font-size:12px; color:var(--tenue); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .pill{display:inline-block; font-size:12px; font-weight:700; padding:4px 9px; border-radius:12px; background:#e8edf2; color:var(--tenue); white-space:nowrap;}
+  .item-lista.completo .pill{background:var(--verde); color:#fff;}
+  .item-lista.parcial .pill{background:var(--ambar-suave); color:var(--ambar);}
+  .vacio-lista{text-align:center; color:var(--tenue); padding:34px 16px; font-size:14px; line-height:1.6;}
 
-  .ficha{background:var(--azul-claro); border-radius:10px; padding:13px 15px; margin-bottom:16px;}
+  .ficha{background:var(--azul-claro); border-radius:10px; padding:13px 15px; margin-bottom:14px;}
   .ficha .linea{display:flex; justify-content:space-between; gap:14px; padding:3px 0; font-size:14px;}
   .ficha .etiqueta{font-size:11.5px; font-weight:700; color:var(--azul); text-transform:uppercase; letter-spacing:.3px; flex-shrink:0;}
-  .ficha .valor{text-align:right;}
+  .ficha .valor{text-align:right; min-width:0; overflow-wrap:anywhere;}
+  .sello{display:inline-block; padding:4px 11px; border-radius:12px; font-size:12px; font-weight:700;}
+  .sello.completo{background:var(--verde); color:#fff;}
+  .sello.pendiente{background:var(--ambar-suave); color:var(--ambar);}
 
   .progreso-fila{display:flex; align-items:center; gap:10px; margin-bottom:14px; font-size:13px; color:var(--tenue);}
   .barra-p{flex:1; height:8px; background:#dfe5eb; border-radius:4px; overflow:hidden;}
   .barra-p div{height:100%; width:0%; background:var(--verde); transition:width .25s;}
 
-  .acciones-rapidas{display:flex; gap:8px; margin-bottom:12px;}
-  .btn-mini{flex:1; padding:9px; font-size:13px; border:1px solid var(--borde); background:#fff; border-radius:8px; cursor:pointer; color:var(--azul); font-weight:600; font-family:inherit;}
+  /* Alta: renglón con NUEVO / ACTUALIZAR */
+  .req-encabezado{display:flex; align-items:center; gap:8px; padding:0 12px 7px; font-size:10.5px;
+                  font-weight:700; color:var(--tenue); text-transform:uppercase; letter-spacing:.3px;}
+  .req-encabezado .hueco{flex:1;}
+  .req-encabezado .col{width:74px; text-align:center; flex-shrink:0;}
+  .req{display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--borde);
+       border-radius:9px; margin-bottom:7px; background:#fff;}
+  .req.pedido{border-color:var(--morado); background:var(--morado-suave);}
+  .req .nom{flex:1; font-size:13.5px; font-weight:600; min-width:0;}
+  .req .col{width:74px; display:flex; justify-content:center; flex-shrink:0;}
+  .marca{width:27px; height:27px; border-radius:7px; border:2px solid #b9c4cf; background:#fff;
+         display:flex; align-items:center; justify-content:center; cursor:pointer;
+         font-size:16px; font-weight:700; color:transparent;}
+  .marca.on{background:var(--morado); border-color:var(--morado); color:#fff;}
+  .marca.on.act{background:var(--azul-2); border-color:var(--azul-2);}
 
+  /* Concepto (vendedor / revisión) */
   .concepto{border:1px solid var(--borde); border-radius:10px; margin-bottom:9px; background:#fff; overflow:hidden;}
   .concepto.completo{border-color:var(--verde); background:var(--verde-suave);}
-  .concepto-fila{display:flex; align-items:center; gap:12px; padding:14px; cursor:pointer;}
-  .caja{width:26px; height:26px; border-radius:6px; border:2px solid #b9c4cf; background:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px; font-weight:700; color:transparent;}
+  .concepto.no-pedido{opacity:.5;}
+  .concepto-fila{display:flex; align-items:center; gap:11px; padding:13px 14px;}
+  .caja{width:26px; height:26px; border-radius:6px; border:2px solid #b9c4cf; background:#fff;
+        display:flex; align-items:center; justify-content:center; flex-shrink:0;
+        font-size:16px; font-weight:700; color:transparent;}
   .concepto.completo .caja{background:var(--verde); border-color:var(--verde); color:#fff;}
-  .concepto-nombre{flex:1; font-size:14.5px; font-weight:600;}
-  .btn-evidencia{background:none; border:none; font-size:12px; color:var(--azul-2); cursor:pointer; padding:6px 8px; font-weight:600; flex-shrink:0; font-family:inherit; border-radius:6px;}
+  .caja.bloqueada{border-style:dashed; cursor:not-allowed;}
+  .concepto-nombre{flex:1; font-size:14px; font-weight:600; min-width:0;}
+  .etiqueta-req{display:inline-block; font-size:10px; font-weight:700; padding:2px 7px; border-radius:9px;
+                margin-left:7px; vertical-align:middle; letter-spacing:.3px;}
+  .etiqueta-req.nuevo{background:var(--morado); color:#fff;}
+  .etiqueta-req.actualizar{background:var(--azul-2); color:#fff;}
+  .btn-evidencia{background:none; border:none; font-size:12px; color:var(--azul-2); cursor:pointer;
+                 padding:6px 8px; font-weight:600; flex-shrink:0; font-family:inherit; border-radius:6px;}
   .btn-evidencia.tiene{color:var(--verde);}
 
   .detalle{display:none; padding:0 14px 14px; border-top:1px dashed var(--borde);}
   .concepto.abierto .detalle{display:block;}
-  .detalle textarea{width:100%; min-height:58px; padding:10px; border:1px solid var(--borde); border-radius:8px; font-size:16px; font-family:inherit; resize:vertical; margin-top:11px; color:var(--texto);}
+  .detalle textarea{width:100%; min-height:56px; padding:10px; border:1px solid var(--borde);
+                    border-radius:8px; font-size:16px; font-family:inherit; resize:vertical; margin-top:11px; color:var(--texto);}
   .fila-archivo{display:flex; align-items:center; gap:8px; margin-top:9px; flex-wrap:wrap;}
-  .btn-foto{padding:9px 14px; background:#fff; border:1px solid var(--azul); color:var(--azul); border-radius:8px; font-size:13px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;}
+  .btn-foto{padding:9px 13px; background:#fff; border:1px solid var(--azul); color:var(--azul);
+            border-radius:8px; font-size:13px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;}
   .btn-foto.camara{background:var(--azul); color:#fff;}
   .btn-foto svg{width:15px; height:15px; fill:currentColor; flex-shrink:0;}
-  .btn-quitar{padding:9px 12px; background:#fff; border:1px solid var(--rojo); color:var(--rojo); border-radius:8px; font-size:12.5px; cursor:pointer; font-weight:600; font-family:inherit; display:none;}
+  .btn-quitar{padding:9px 12px; background:#fff; border:1px solid var(--rojo); color:var(--rojo);
+              border-radius:8px; font-size:12.5px; cursor:pointer; font-weight:600; font-family:inherit; display:none;}
   .detalle input[type=file]{display:none;}
   .nombre-archivo{font-size:12px; color:var(--tenue);}
   .previa{max-height:130px; border-radius:8px; margin-top:9px; display:none;}
-  .caja-registrada{display:none; margin-top:10px; padding:9px 11px; background:#fff; border:1px solid var(--borde); border-radius:8px; align-items:center; gap:10px; font-size:12.5px;}
+  .caja-registrada{display:none; margin-top:10px; padding:9px 11px; background:#fff; border:1px solid var(--borde);
+                   border-radius:8px; align-items:center; gap:10px; font-size:12.5px;}
   .caja-registrada.visible{display:flex;}
-  .caja-registrada a{color:var(--azul-2); font-weight:600; flex:1; text-decoration:none;}
+  .caja-registrada a{color:var(--azul-2); font-weight:600; flex:1; text-decoration:none; cursor:pointer;}
   .caja-registrada.borrada{background:var(--rojo-suave); border-color:var(--rojo);}
   .caja-registrada.borrada a{color:var(--tenue); text-decoration:line-through; pointer-events:none;}
-  .btn-borrar-reg{background:none; border:1px solid var(--rojo); color:var(--rojo); border-radius:6px; padding:5px 10px; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit; flex-shrink:0;}
+  .btn-borrar-reg{background:none; border:1px solid var(--rojo); color:var(--rojo); border-radius:6px;
+                  padding:5px 10px; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit; flex-shrink:0;}
   .btn-borrar-reg.deshacer{border-color:var(--tenue); color:var(--tenue);}
+  .nota-guardada{font-size:12.5px; color:var(--tenue); margin-top:9px; padding:9px 11px;
+                 background:#fafbfc; border-radius:8px; border:1px solid var(--borde);}
+  .nota-guardada strong{color:var(--texto);}
 
-  .pie{position:sticky; bottom:0; background:#fff; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid var(--borde); margin:16px -16px -16px;}
-  button.principal{width:100%; padding:15px; background:var(--azul); color:#fff; border:none; border-radius:10px; font-size:15.5px; font-weight:700; cursor:pointer; font-family:inherit;}
+  /* Botones */
+  .pie{position:sticky; bottom:0; background:#fff; padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+       border-top:1px solid var(--borde); margin:16px -16px -16px;}
+  button.principal{width:100%; padding:15px; background:var(--azul); color:#fff; border:none;
+                   border-radius:10px; font-size:15.5px; font-weight:700; cursor:pointer; font-family:inherit;}
+  button.principal.morado{background:var(--morado);}
+  button.principal.verde{background:var(--verde);}
   button.principal:disabled{background:#a3aeb8;}
+  .btn-secundario{width:100%; padding:13px; background:#fff; border:1px solid var(--borde); color:var(--azul);
+                  border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; margin-top:9px;}
+  .acciones-rapidas{display:flex; gap:8px; margin-bottom:12px;}
+  .btn-mini{flex:1; padding:9px; font-size:13px; border:1px solid var(--borde); background:#fff;
+            border-radius:8px; cursor:pointer; color:var(--azul); font-weight:600; font-family:inherit;}
 
   .mensaje{margin-top:12px; padding:11px 14px; border-radius:8px; font-size:13.5px; display:none;}
   .mensaje.exito{background:var(--verde-suave); color:var(--verde); display:block;}
   .mensaje.error{background:var(--rojo-suave); color:var(--rojo); display:block;}
   .mensaje.aviso{background:var(--ambar-suave); color:var(--ambar); display:block;}
 
-  .overlay{position:fixed; inset:0; background:rgba(20,35,50,.6); display:none; align-items:center; justify-content:center; z-index:100; padding:24px;}
+  /* Overlay */
+  .overlay{position:fixed; inset:0; background:rgba(20,35,50,.6); display:none; align-items:center;
+           justify-content:center; z-index:100; padding:24px;}
   .overlay.visible{display:flex;}
-  .caja-overlay{background:#fff; border-radius:16px; padding:30px 28px; text-align:center; max-width:330px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,.25);}
+  .caja-overlay{background:#fff; border-radius:16px; padding:28px 26px; text-align:center; max-width:330px; width:100%;
+                box-shadow:0 10px 40px rgba(0,0,0,.25);}
   .circulo{width:74px; height:74px; border-radius:50%; margin:0 auto 16px; display:flex; align-items:center; justify-content:center;}
   .circulo.ok{background:var(--verde); animation:brote .35s ease-out;}
   .circulo.mal{background:var(--rojo); animation:brote .35s ease-out; color:#fff; font-size:38px; font-weight:700;}
   .circulo.ok svg{width:40px; height:40px;}
-  .circulo.ok svg path{stroke:#fff; stroke-width:5; fill:none; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:48; stroke-dashoffset:48; animation:trazo .4s .18s ease-out forwards;}
+  .circulo.ok svg path{stroke:#fff; stroke-width:5; fill:none; stroke-linecap:round; stroke-linejoin:round;
+                       stroke-dasharray:48; stroke-dashoffset:48; animation:trazo .4s .18s ease-out forwards;}
   .circulo.espera{border:5px solid var(--azul-claro); border-top-color:var(--azul); animation:girar .8s linear infinite;}
   @keyframes brote{0%{transform:scale(0);}60%{transform:scale(1.12);}100%{transform:scale(1);}}
   @keyframes trazo{to{stroke-dashoffset:0;}}
   @keyframes girar{to{transform:rotate(360deg);}}
   .texto-overlay{font-size:16.5px; font-weight:700;}
   .subtexto-overlay{font-size:13px; color:var(--tenue); margin-top:6px; word-break:break-word;}
-  .btn-cerrar-overlay{margin-top:16px; padding:10px 18px; border:1px solid var(--borde); background:#fff; border-radius:8px; font-size:13.5px; font-weight:600; cursor:pointer; display:none; font-family:inherit;}
+  .botones-overlay{margin-top:18px; display:none; gap:8px; flex-direction:column;}
+  .botones-overlay.visible{display:flex;}
+  .botones-overlay button{padding:11px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; border:1px solid var(--borde); background:#fff;}
+  .botones-overlay button.rojo{background:var(--rojo); color:#fff; border-color:var(--rojo);}
 
-  /* ── Visor de imagen ── */
+  /* Visor */
   .visor{position:fixed; inset:0; background:rgba(12,20,28,.94); display:none; flex-direction:column; z-index:200;}
   .visor.visible{display:flex;}
-  .visor-barra{display:flex; align-items:center; gap:12px; padding:14px 16px; color:#fff; flex-shrink:0;}
+  .visor-barra{display:flex; align-items:center; gap:10px; padding:14px 16px; color:#fff; flex-shrink:0;}
   .visor-titulo{flex:1; font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .visor-btn{background:rgba(255,255,255,.16); border:none; color:#fff; padding:8px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; text-decoration:none; display:inline-block;}
-  .visor-cerrar{background:rgba(255,255,255,.16); border:none; color:#fff; width:36px; height:36px; border-radius:8px; font-size:20px; cursor:pointer; line-height:1; flex-shrink:0;}
+  .visor-btn{background:rgba(255,255,255,.16); border:none; color:#fff; padding:8px 13px; border-radius:8px;
+             font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; text-decoration:none; display:inline-block;}
+  .visor-cerrar{background:rgba(255,255,255,.16); border:none; color:#fff; width:36px; height:36px;
+                border-radius:8px; font-size:20px; cursor:pointer; line-height:1; flex-shrink:0;}
   .visor-cuerpo{flex:1; display:flex; align-items:center; justify-content:center; padding:0 12px 20px; overflow:auto;}
   .visor-cuerpo img{max-width:100%; max-height:100%; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,.5);}
   .visor-estado{color:#c8d3dd; text-align:center; font-size:14px;}
-  .visor-estado .circulo{width:60px; height:60px; border-radius:50%; margin:0 auto 14px; border:5px solid rgba(255,255,255,.2); border-top-color:#fff; animation:girar .8s linear infinite;}
+  .visor-estado .circulo{width:60px; height:60px; border:5px solid rgba(255,255,255,.2); border-top-color:#fff; animation:girar .8s linear infinite;}
 
   .carga-inicial{text-align:center; padding:60px 20px; color:var(--tenue);}
   .carga-inicial .circulo{border:5px solid var(--azul-claro); border-top-color:var(--azul); animation:girar .8s linear infinite;}
-  .btn-reintentar{margin-top:16px; padding:11px 20px; background:var(--azul); color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;}
+  .btn-reintentar{margin-top:16px; padding:11px 20px; background:var(--azul); color:#fff; border:none;
+                  border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;}
+  .sugerencias{border:1px solid var(--borde); border-radius:8px; max-height:230px; overflow:auto; margin:-6px 0 13px; display:none;}
+  .sugerencias.visible{display:block;}
+  .sug{padding:11px 13px; border-bottom:1px solid #eef1f4; cursor:pointer; font-size:14px;}
+  .sug:last-child{border-bottom:none;}
+  .sug:active{background:var(--azul-claro);}
+  .sug .cod{font-size:11.5px; color:var(--tenue); margin-top:2px;}
 </style>
 </head>
 <body>
 
 <div class="app">
 
-  <div class="barra">
-    <button class="btn-atras" id="btnAtras" onclick="irAPanel()" style="display:none">&#8592;</button>
-    <h1 id="tituloBarra">Checklist de Expediente<span class="sub">Clientes de Mayoreo</span></h1>
+  <div class="barra" id="barra">
+    <button class="btn-atras" id="btnAtras" onclick="atras()" style="display:none">&#8592;</button>
+    <h1 id="tituloBarra">Cuentas por Cobrar<span class="sub">Documentación de clientes mayoreo</span></h1>
+    <button class="btn-barra" id="btnSalir" onclick="irAInicio()" style="display:none">Salir</button>
   </div>
 
   <div class="carga-inicial" id="cargaInicial">
     <div class="circulo"></div>
-    <div style="margin-top:14px">Cargando clientes...</div>
+    <div style="margin-top:14px">Cargando información...</div>
   </div>
 
-  <!-- PANEL -->
-  <div class="pantalla" id="pantallaPanel">
+  <!-- ═══ INICIO: elegir rol ═══ -->
+  <div class="pantalla" id="pInicio">
+    <h2 class="titulo">¿Cómo vas a entrar?</h2>
+    <p class="desc">Selecciona tu rol para continuar.</p>
 
-    <div class="filtros">
-      <select id="filtroVendedor"><option value="">Todos los vendedores</option></select>
-      <input type="search" id="busqueda" placeholder="Buscar por nombre o código..." autocomplete="off">
+    <div class="rol sup" onclick="irA('pClave')">
+      <div class="icono"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg></div>
+      <div class="txt">
+        <div class="t1">Supervisor de cuentas</div>
+        <div class="t2">Da de alta clientes, define requisitos y valida documentación</div>
+      </div>
+      <div class="flecha">&#8250;</div>
     </div>
 
-    <div class="contexto" id="contexto"></div>
+    <div class="rol ven" onclick="abrirVendedor()">
+      <div class="icono"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+      <div class="txt">
+        <div class="t1">Vendedor</div>
+        <div class="t2">Consulta tus clientes asignados y sube la evidencia</div>
+      </div>
+      <div class="flecha">&#8250;</div>
+    </div>
+  </div>
+
+  <!-- ═══ CLAVE ═══ -->
+  <div class="pantalla" id="pClave">
+    <h2 class="titulo">Acceso de supervisor</h2>
+    <p class="desc">Escribe la contraseña para continuar.</p>
+    <label class="campo" for="clave">Contraseña</label>
+    <input type="password" id="clave" placeholder="••••••••" autocomplete="current-password"
+           onkeydown="if(event.key==='Enter') entrarSupervisor()">
+    <button class="principal morado" onclick="entrarSupervisor()">Entrar</button>
+    <div class="mensaje" id="msgClave"></div>
+  </div>
+
+  <!-- ═══ VENDEDOR: elegir nombre ═══ -->
+  <div class="pantalla" id="pVendedor">
+    <h2 class="titulo">¿Quién eres?</h2>
+    <p class="desc">Selecciona tu nombre para ver los clientes que te asignaron.</p>
+    <label class="campo" for="selVendedor">Vendedor</label>
+    <select id="selVendedor"><option value="">Selecciona tu nombre</option></select>
+    <button class="principal" onclick="entrarVendedor()">Ver mis clientes</button>
+    <div class="mensaje" id="msgVendedor"></div>
+  </div>
+
+  <!-- ═══ MENÚ SUPERVISOR ═══ -->
+  <div class="pantalla" id="pMenuSup">
+    <div class="tarjetas">
+      <div class="tarjeta total"><div class="n" id="sTotal">—</div><div class="t">Asignados</div></div>
+      <div class="tarjeta ok"><div class="n" id="sCompletos">—</div><div class="t">Completos</div></div>
+      <div class="tarjeta falta"><div class="n" id="sPendientes">—</div><div class="t">Pendientes</div></div>
+    </div>
+
+    <div class="rol sup" onclick="abrirAlta()">
+      <div class="icono"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></div>
+      <div class="txt">
+        <div class="t1">Dar de alta clientes</div>
+        <div class="t2">Asignar documentación a un vendedor para el mes</div>
+      </div>
+      <div class="flecha">&#8250;</div>
+    </div>
+
+    <div class="rol ven" onclick="abrirRevision()">
+      <div class="icono"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+      <div class="txt">
+        <div class="t1">Revisar y validar</div>
+        <div class="t2">Palomear documentos cumplidos y cerrar expedientes</div>
+      </div>
+      <div class="flecha">&#8250;</div>
+    </div>
+  </div>
+
+  <!-- ═══ ALTA ═══ -->
+  <div class="pantalla" id="pAlta">
+    <div class="seccion">Datos del alta</div>
+    <label class="campo" for="altaSupervisor">Tu nombre (quien da de alta)</label>
+    <input type="text" id="altaSupervisor" placeholder="Nombre del supervisor" autocomplete="name">
+
+    <label class="campo" for="altaMes">Mes de la campaña</label>
+    <input type="month" id="altaMes">
+
+    <label class="campo" for="altaVendedor">Vendedor</label>
+    <select id="altaVendedor" onchange="alCambiarVendedorAlta()"><option value="">Selecciona un vendedor</option></select>
+
+    <label class="campo" for="altaBusqueda">Cliente</label>
+    <input type="search" id="altaBusqueda" placeholder="Escribe el nombre o código..." autocomplete="off" oninput="buscarClientes()">
+    <div class="sugerencias" id="sugerencias"></div>
+    <div class="ficha" id="altaFicha" style="display:none"></div>
+
+    <div id="altaRequisitos" style="display:none">
+      <div class="seccion">¿Qué documentación se requiere?</div>
+      <div class="req-encabezado">
+        <span class="hueco">Documento</span>
+        <span class="col">Nuevo</span>
+        <span class="col">Actualizar</span>
+      </div>
+      <div id="listaReq"></div>
+      <div class="pie">
+        <button class="principal morado" id="btnAlta" onclick="guardarAlta()">Dar de alta cliente</button>
+        <div class="mensaje" id="msgAlta"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ REVISIÓN (supervisor) / LISTA VENDEDOR ═══ -->
+  <div class="pantalla" id="pLista">
+    <div class="filtros">
+      <label class="campo" for="fMes">Mes</label>
+      <select id="fMes" onchange="pintarLista()"></select>
+      <div id="bloqueVendedor">
+        <label class="campo" for="fVendedor">Vendedor</label>
+        <select id="fVendedor" onchange="pintarLista()"></select>
+      </div>
+      <input type="search" id="fBusqueda" placeholder="Buscar cliente..." autocomplete="off" oninput="pintarLista()">
+    </div>
 
     <div class="tarjetas">
-      <div class="tarjeta total" data-filtro="todos" onclick="filtrarPorTarjeta('todos')">
-        <div class="n" id="nTotal">—</div><div class="t">Clientes</div>
-      </div>
-      <div class="tarjeta ok" data-filtro="completos" onclick="filtrarPorTarjeta('completos')">
-        <div class="n" id="nCompletos">—</div><div class="t">Completos</div>
-      </div>
-      <div class="tarjeta falta" data-filtro="pendientes" onclick="filtrarPorTarjeta('pendientes')">
-        <div class="n" id="nPendientes">—</div><div class="t">Faltantes</div>
-      </div>
+      <div class="tarjeta total" data-f="todos" onclick="filtrarPorTarjeta('todos')"><div class="n" id="lTotal">—</div><div class="t">Clientes</div></div>
+      <div class="tarjeta ok" data-f="completos" onclick="filtrarPorTarjeta('completos')"><div class="n" id="lCompletos">—</div><div class="t">Completos</div></div>
+      <div class="tarjeta falta" data-f="pendientes" onclick="filtrarPorTarjeta('pendientes')"><div class="n" id="lPendientes">—</div><div class="t">Pendientes</div></div>
     </div>
 
-    <div class="filtros">
-      <select id="filtroEstado">
-        <option value="todos">Todos los estatus</option>
-        <option value="completos">Solo completos</option>
-        <option value="pendientes">Solo con faltantes</option>
-        <option value="sinIniciar">Sin iniciar</option>
-      </select>
-    </div>
-
-    <div class="conteo-lista" id="conteoLista"></div>
-    <div id="listaClientes"></div>
-    <div class="mensaje" id="mensajePanel"></div>
+    <div class="contexto" id="lContexto"></div>
+    <div id="listaAsignaciones"></div>
   </div>
 
-  <!-- CLIENTE -->
-  <div class="pantalla" id="pantallaCliente">
-    <div class="ficha" id="ficha"></div>
+  <!-- ═══ DETALLE DE UN CLIENTE ═══ -->
+  <div class="pantalla" id="pDetalle">
+    <div class="ficha" id="dFicha"></div>
     <div class="progreso-fila">
-      <span id="textoProgreso">0 de 9</span>
-      <div class="barra-p"><div id="barraProgreso"></div></div>
+      <span id="dProgreso">0 de 0</span>
+      <div class="barra-p"><div id="dBarra"></div></div>
     </div>
-    <div class="acciones-rapidas">
-      <button class="btn-mini" onclick="marcarTodos(true)">Marcar todos</button>
+    <div class="acciones-rapidas" id="dAcciones" style="display:none">
+      <button class="btn-mini" onclick="marcarTodos(true)">Palomear todos</button>
       <button class="btn-mini" onclick="marcarTodos(false)">Limpiar</button>
     </div>
-    <div id="listaConceptos"></div>
-    <div style="margin-top:14px">
-      <label style="font-size:11.5px; font-weight:700; color:#1f4e78; text-transform:uppercase; letter-spacing:.3px">Quién captura</label>
-      <input type="text" id="capturadoPor" placeholder="Tu nombre" autocomplete="name" style="margin-top:6px">
+    <div id="dConceptos"></div>
+    <div id="dCaptura" style="margin-top:14px">
+      <label class="campo" for="dCapturadoPor">Quién captura</label>
+      <input type="text" id="dCapturadoPor" placeholder="Tu nombre" autocomplete="name">
     </div>
     <div class="pie">
-      <button class="principal" id="btnGuardar" onclick="guardar()">Guardar checklist</button>
-      <div class="mensaje" id="mensaje"></div>
+      <button class="principal" id="dGuardar" onclick="guardarDetalle()">Guardar</button>
+      <button class="btn-secundario" id="dCerrar" onclick="pedirCierre()" style="display:none">Marcar documentación completa</button>
+      <div class="mensaje" id="msgDetalle"></div>
     </div>
   </div>
 
 </div>
 
-<!-- Visor de imagen -->
+<!-- Visor -->
 <div class="visor" id="visor">
   <div class="visor-barra">
     <button class="visor-cerrar" onclick="cerrarVisor()">&times;</button>
     <div class="visor-titulo" id="visorTitulo">Evidencia</div>
     <a class="visor-btn" id="visorDescargar" download style="display:none">Descargar</a>
-    <a class="visor-btn" id="visorDrive" target="_blank" rel="noopener">Abrir en Drive</a>
   </div>
   <div class="visor-cuerpo" id="visorCuerpo"></div>
 </div>
 
+<!-- Overlay -->
 <div class="overlay" id="overlay">
   <div class="caja-overlay">
     <div class="circulo espera" id="circulo"></div>
     <div class="texto-overlay" id="textoOverlay">Guardando...</div>
     <div class="subtexto-overlay" id="subtextoOverlay"></div>
-    <button class="btn-cerrar-overlay" id="btnCerrarOverlay" onclick="ocultarOverlay()">Cerrar</button>
+    <div class="botones-overlay" id="botonesOverlay"></div>
   </div>
 </div>
 
@@ -238,14 +418,23 @@
 var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznVrR76WHv2IaxYf64CKav_z8bhTkw8T7XNcG5CtbKFOqay8NIZGw69tpF0F1uWh_Q/exec";
 /* ===================================================================== */
 
-var LIMITE_FOTO = 75000;
-var LIMITE_NORMAL = 40000;
+var LIMITE_FOTO = 75000, LIMITE_NORMAL = 45000;
 
 var CONCEPTOS = [];
-var clientes = [];
-var clienteActivo = null;
-var guardando = false;
-var borrados = {};   // indice de concepto -> true si se marcó para borrar evidencia
+var catalogo = [];        // clientes del Sheet
+var asignaciones = [];    // ciclos mensuales
+var vendedores = [];
+
+var rol = null;           // 'SUPERVISOR' | 'VENDEDOR'
+var clave = '';           // clave del supervisor (solo en memoria)
+var vendedorActivo = '';
+var pantallaActual = 'pInicio';
+var historial = [];
+var asignacionActiva = null;
+var clienteAlta = null;
+var reqAlta = {};         // concepto -> 'NUEVO' | 'ACTUALIZAR' | ''
+var borrados = {};
+var ocupado = false;
 
 function $(id){ return document.getElementById(id); }
 function escapar(t){
@@ -254,6 +443,17 @@ function escapar(t){
   });
 }
 function norm(t){ return String(t||'').trim().toUpperCase(); }
+function mesActual(){
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2);
+}
+function nombreMes(m){
+  if(!m) return '';
+  var partes = m.split('-');
+  var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var i = parseInt(partes[1],10) - 1;
+  return (meses[i] || m) + ' ' + partes[0];
+}
 
 /* ── Peticiones ────────────────────────────────────────────────────── */
 
@@ -291,181 +491,487 @@ function peticion(url, opciones, limite){
   });
 }
 
+function enviar(cuerpo, limite){
+  return peticion(APPS_SCRIPT_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(cuerpo)
+  }, limite || LIMITE_NORMAL);
+}
+
 /* ── Arranque ──────────────────────────────────────────────────────── */
 
-function iniciar(){
-  $('cargaInicial').innerHTML = '<div class="circulo"></div><div style="margin-top:14px">Cargando clientes...</div>';
+function cargar(){
+  $('cargaInicial').innerHTML = '<div class="circulo"></div><div style="margin-top:14px">Cargando información...</div>';
   $('cargaInicial').style.display = 'block';
-  $('pantallaPanel').classList.remove('activa');
+  document.querySelectorAll('.pantalla').forEach(function(p){ p.classList.remove('activa'); });
 
-  peticion(APPS_SCRIPT_URL + '?accion=datos&t=' + Date.now(), {cache:'no-store'}, LIMITE_NORMAL)
+  return peticion(APPS_SCRIPT_URL + '?accion=datos&t=' + Date.now(), {cache:'no-store'}, LIMITE_NORMAL)
   .then(function(r){
-    var d = r.datos;
-    CONCEPTOS = d.conceptos;
-    clientes = d.clientes;
+    CONCEPTOS = r.datos.conceptos;
+    catalogo = r.datos.clientes;
+    asignaciones = r.datos.asignaciones;
 
-    $('cargaInicial').style.display = 'none';
-    $('pantallaPanel').classList.add('activa');
-
-    var vendedores = [];
-    clientes.forEach(function(c){
+    vendedores = [];
+    catalogo.forEach(function(c){
       if(c.vendedor && vendedores.indexOf(c.vendedor) === -1) vendedores.push(c.vendedor);
     });
+    asignaciones.forEach(function(a){
+      if(a.vendedor && vendedores.indexOf(a.vendedor) === -1) vendedores.push(a.vendedor);
+    });
     vendedores.sort(function(a,b){ return a.localeCompare(b,'es'); });
-    $('filtroVendedor').innerHTML = '<option value="">Todos los vendedores</option>' +
-      vendedores.map(function(v){ return '<option value="'+escapar(v)+'">'+escapar(v)+'</option>'; }).join('');
 
-    if(d.conceptosFaltantes && d.conceptosFaltantes.length){
-      var m = $('mensajePanel');
-      m.textContent = 'Aviso: la hoja "' + d.hoja + '" no tiene estas columnas: ' +
-        d.conceptosFaltantes.join(', ') + '. Esos requisitos no se guardarán hasta que las agregues.';
-      m.className = 'mensaje aviso';
-    }
-
-    refrescarPanel();
+    $('cargaInicial').style.display = 'none';
+    return true;
   })
   .catch(function(err){
     $('cargaInicial').innerHTML =
       '<div style="color:#c62828; font-weight:700; font-size:16px">No se pudieron cargar los datos</div>' +
-      '<div style="margin-top:10px; font-size:13.5px; max-width:420px; margin-left:auto; margin-right:auto">' + escapar(err.message) + '</div>' +
-      '<button class="btn-reintentar" onclick="iniciar()">Reintentar</button>' +
-      '<div style="margin-top:18px; font-size:11px; word-break:break-all; color:#8a99a8">' + escapar(APPS_SCRIPT_URL) + '</div>';
+      '<div style="margin-top:10px; font-size:13.5px; max-width:430px; margin-left:auto; margin-right:auto">' + escapar(err.message) + '</div>' +
+      '<button class="btn-reintentar" onclick="iniciar()">Reintentar</button>';
+    throw err;
   });
 }
 
-/* ── Estatus y panel ───────────────────────────────────────────────── */
-
-function conteoCliente(c){
-  var n = 0;
-  CONCEPTOS.forEach(function(k){ if(c.estado[k] && c.estado[k].marcado) n++; });
-  return n;
+function iniciar(){
+  cargar().then(function(){ irA('pInicio', true); }).catch(function(){});
 }
 
-/** Clientes del vendedor seleccionado (o todos). Es la base de TODO el panel. */
-function universo(){
-  var v = $('filtroVendedor').value;
-  return v ? clientes.filter(function(c){ return c.vendedor === v; }) : clientes;
+/* ── Navegación ────────────────────────────────────────────────────── */
+
+function irA(id, reiniciar){
+  if(reiniciar) historial = [];
+  else if(pantallaActual && pantallaActual !== id) historial.push(pantallaActual);
+  mostrarPantalla(id);
 }
 
-function refrescarPanel(){
-  var base = universo();
-  var v = $('filtroVendedor').value;
+function mostrarPantalla(id){
+  document.querySelectorAll('.pantalla').forEach(function(p){ p.classList.remove('activa'); });
+  $(id).classList.add('activa');
+  pantallaActual = id;
 
-  var completos = base.filter(function(c){ return conteoCliente(c) === CONCEPTOS.length; }).length;
-  $('nTotal').textContent = base.length;
-  $('nCompletos').textContent = completos;
-  $('nPendientes').textContent = base.length - completos;
+  $('btnAtras').style.display = historial.length ? 'block' : 'none';
+  $('btnSalir').style.display = (rol && id !== 'pInicio') ? 'block' : 'none';
+  $('barra').className = 'barra' + (rol === 'SUPERVISOR' ? ' supervisor' : '');
 
-  var ctx = $('contexto');
-  if(v){
-    var pct = base.length ? Math.round(completos/base.length*100) : 0;
-    ctx.style.display = 'block';
-    ctx.innerHTML = 'Vendedor <strong>' + escapar(v) + '</strong>: ' + base.length +
-      ' clientes, ' + completos + ' con expediente completo (' + pct + '%), ' +
-      (base.length - completos) + ' por completar.';
-  }else{
-    ctx.style.display = 'none';
-  }
-
-  pintarLista();
+  var titulos = {
+    pInicio:   ['Cuentas por Cobrar', 'Documentación de clientes mayoreo'],
+    pClave:    ['Supervisor de cuentas', 'Acceso restringido'],
+    pMenuSup:  ['Supervisor de cuentas', 'Panel de control'],
+    pAlta:     ['Dar de alta', 'Asignar documentación por mes'],
+    pLista:    [rol === 'SUPERVISOR' ? 'Revisar y validar' : 'Mis clientes',
+                rol === 'SUPERVISOR' ? 'Expedientes asignados' : vendedorActivo],
+    pDetalle:  [asignacionActiva ? asignacionActiva.nombre : 'Cliente',
+                asignacionActiva ? asignacionActiva.codigo : '']
+  };
+  var t = titulos[id] || ['Cuentas por Cobrar',''];
+  $('tituloBarra').innerHTML = escapar(t[0]) + '<span class="sub">' + escapar(t[1]) + '</span>';
+  window.scrollTo(0,0);
 }
 
-function pintarLista(){
-  var texto = norm($('busqueda').value);
-  var est = $('filtroEstado').value;
-  var base = universo();
+function volverALista(){
+  if(historial.length && historial[historial.length-1] === 'pLista') historial.pop();
+  mostrarPantalla('pLista');
+  prepararLista();
+}
 
-  var lista = base.filter(function(c){
-    if(texto && norm(c.nombre).indexOf(texto) === -1 && norm(c.codigo).indexOf(texto) === -1) return false;
-    var n = conteoCliente(c);
-    if(est === 'completos'  && n !== CONCEPTOS.length) return false;
-    if(est === 'pendientes' && n === CONCEPTOS.length) return false;
-    if(est === 'sinIniciar' && n !== 0) return false;
-    return true;
+function atras(){
+  if(ocupado || !historial.length) return;
+  var destino = historial.pop();
+  mostrarPantalla(destino);
+  if(destino === 'pLista') pintarLista();
+  if(destino === 'pMenuSup') actualizarResumenSupervisor();
+}
+
+function irAInicio(){
+  if(ocupado) return;
+  rol = null; clave = ''; vendedorActivo = ''; asignacionActiva = null;
+  $('clave').value = '';
+  irA('pInicio', true);
+}
+
+/* ── Supervisor: acceso ────────────────────────────────────────────── */
+
+function entrarSupervisor(){
+  var valor = $('clave').value;
+  if(!valor.trim()){ aviso('msgClave', 'Escribe la contraseña.', 'error'); return; }
+
+  mostrarOverlay('espera', 'Verificando...');
+  enviar({accion:'login', clave: valor}).then(function(r){
+    ocultarOverlay();
+    if(!r.valido){ aviso('msgClave', 'Contraseña incorrecta.', 'error'); return; }
+    rol = 'SUPERVISOR';
+    clave = valor;
+    $('msgClave').style.display = 'none';
+    $('clave').value = '';
+    actualizarResumenSupervisor();
+    irA('pMenuSup', true);
+  }).catch(function(err){
+    ocultarOverlay();
+    aviso('msgClave', err.message, 'error');
   });
+}
 
-  $('conteoLista').textContent = lista.length === base.length
-    ? 'Mostrando ' + lista.length + ' clientes'
-    : 'Mostrando ' + lista.length + ' de ' + base.length + ' clientes';
+function actualizarResumenSupervisor(){
+  var completos = asignaciones.filter(function(a){ return a.estatus === 'COMPLETO'; }).length;
+  $('sTotal').textContent = asignaciones.length;
+  $('sCompletos').textContent = completos;
+  $('sPendientes').textContent = asignaciones.length - completos;
+}
 
-  if(!lista.length){
-    $('listaClientes').innerHTML = '<div class="vacio-lista">No hay clientes con esos filtros.</div>';
+/* ── Vendedor: entrar ──────────────────────────────────────────────── */
+
+function abrirVendedor(){
+  $('selVendedor').innerHTML = '<option value="">Selecciona tu nombre</option>' +
+    vendedores.map(function(v){ return '<option value="'+escapar(v)+'">'+escapar(v)+'</option>'; }).join('');
+  $('msgVendedor').style.display = 'none';
+  irA('pVendedor');
+}
+
+function entrarVendedor(){
+  var v = $('selVendedor').value;
+  if(!v){ aviso('msgVendedor','Selecciona tu nombre de la lista.','error'); return; }
+  rol = 'VENDEDOR';
+  clave = '';
+  vendedorActivo = v;
+  prepararLista();
+  irA('pLista', true);
+}
+
+/* ── Alta ──────────────────────────────────────────────────────────── */
+
+function abrirAlta(){
+  clienteAlta = null;
+  reqAlta = {};
+  $('altaBusqueda').value = '';
+  $('altaFicha').style.display = 'none';
+  $('altaRequisitos').style.display = 'none';
+  $('sugerencias').classList.remove('visible');
+  $('msgAlta').style.display = 'none';
+  if(!$('altaMes').value) $('altaMes').value = mesActual();
+
+  $('altaVendedor').innerHTML = '<option value="">Selecciona un vendedor</option>' +
+    vendedores.map(function(v){ return '<option value="'+escapar(v)+'">'+escapar(v)+'</option>'; }).join('');
+
+  irA('pAlta');
+}
+
+function alCambiarVendedorAlta(){
+  clienteAlta = null;
+  $('altaBusqueda').value = '';
+  $('altaFicha').style.display = 'none';
+  $('altaRequisitos').style.display = 'none';
+  $('sugerencias').classList.remove('visible');
+}
+
+function buscarClientes(){
+  var texto = norm($('altaBusqueda').value);
+  var vend = $('altaVendedor').value;
+  var caja = $('sugerencias');
+
+  if(texto.length < 2){ caja.classList.remove('visible'); return; }
+
+  var base = vend ? catalogo.filter(function(c){ return c.vendedor === vend; }) : catalogo;
+  var res = base.filter(function(c){
+    return norm(c.nombre).indexOf(texto) !== -1 || norm(c.codigo).indexOf(texto) !== -1;
+  }).slice(0, 40);
+
+  if(!res.length){
+    caja.innerHTML = '<div class="sug" style="color:#6b7a89">Sin coincidencias' +
+      (vend ? ' entre los clientes de ' + escapar(vend) : '') + '</div>';
+    caja.classList.add('visible');
     return;
   }
 
-  $('listaClientes').innerHTML = lista.map(function(c){
-    var n = conteoCliente(c);
-    var clase = n === CONCEPTOS.length ? 'completo' : (n > 0 ? 'parcial' : 'vacio');
-    return '<div class="cliente ' + clase + '" data-codigo="' + escapar(c.codigo) + '">' +
-      '<div class="datos"><div class="nombre">' + escapar(c.nombre) + '</div>' +
-      '<div class="meta">' + escapar(c.codigo) + (c.vendedor ? ' · ' + escapar(c.vendedor) : '') + '</div></div>' +
-      '<div class="estado"><span class="pill">' + n + '/' + CONCEPTOS.length + '</span></div></div>';
+  caja.innerHTML = res.map(function(c){
+    return '<div class="sug" data-codigo="'+escapar(c.codigo)+'">' +
+      escapar(c.nombre) + '<div class="cod">' + escapar(c.codigo) +
+      (c.vendedor ? ' · ' + escapar(c.vendedor) : '') + '</div></div>';
+  }).join('');
+  caja.classList.add('visible');
+
+  Array.prototype.forEach.call(caja.querySelectorAll('.sug[data-codigo]'), function(el){
+    el.addEventListener('click', function(){ elegirClienteAlta(el.getAttribute('data-codigo')); });
+  });
+}
+
+function elegirClienteAlta(codigo){
+  var c = null;
+  catalogo.forEach(function(x){ if(x.codigo === codigo) c = x; });
+  if(!c) return;
+
+  clienteAlta = c;
+  if(!$('altaVendedor').value && c.vendedor) $('altaVendedor').value = c.vendedor;
+
+  $('altaBusqueda').value = c.nombre;
+  $('sugerencias').classList.remove('visible');
+  $('altaFicha').style.display = 'block';
+  $('altaFicha').innerHTML =
+    '<div class="linea"><span class="etiqueta">Cliente</span><span class="valor">'+escapar(c.nombre)+'</span></div>' +
+    '<div class="linea"><span class="etiqueta">Código</span><span class="valor"><strong>'+escapar(c.codigo)+'</strong></span></div>' +
+    '<div class="linea"><span class="etiqueta">Vendedor</span><span class="valor">'+escapar(c.vendedor || '—')+'</span></div>';
+
+  reqAlta = {};
+  $('listaReq').innerHTML = CONCEPTOS.map(function(nombre,i){
+    return '<div class="req" id="req'+i+'">' +
+      '<span class="nom">'+escapar(nombre)+'</span>' +
+      '<span class="col"><span class="marca" id="mNuevo'+i+'" onclick="marcarReq('+i+',\'NUEVO\')">&#10003;</span></span>' +
+      '<span class="col"><span class="marca act" id="mAct'+i+'" onclick="marcarReq('+i+',\'ACTUALIZAR\')">&#10003;</span></span>' +
+      '</div>';
   }).join('');
 
-  Array.prototype.forEach.call(document.querySelectorAll('.cliente'), function(el){
-    el.addEventListener('click', function(){ abrirCliente(el.getAttribute('data-codigo')); });
+  $('altaRequisitos').style.display = 'block';
+  $('msgAlta').style.display = 'none';
+}
+
+function marcarReq(i, tipo){
+  var nombre = CONCEPTOS[i];
+  var actual = reqAlta[nombre] || '';
+  reqAlta[nombre] = (actual === tipo) ? '' : tipo;
+
+  $('mNuevo'+i).classList.toggle('on', reqAlta[nombre] === 'NUEVO');
+  $('mAct'+i).classList.toggle('on', reqAlta[nombre] === 'ACTUALIZAR');
+  $('req'+i).classList.toggle('pedido', !!reqAlta[nombre]);
+}
+
+function guardarAlta(){
+  if(ocupado) return;
+  var supervisor = $('altaSupervisor').value.trim();
+  var mes = $('altaMes').value;
+  var vend = $('altaVendedor').value;
+
+  if(!supervisor){ aviso('msgAlta','Escribe tu nombre como supervisor.','error'); return; }
+  if(!mes){ aviso('msgAlta','Selecciona el mes.','error'); return; }
+  if(!vend){ aviso('msgAlta','Selecciona el vendedor.','error'); return; }
+  if(!clienteAlta){ aviso('msgAlta','Selecciona un cliente.','error'); return; }
+
+  var pedidos = CONCEPTOS.filter(function(c){ return reqAlta[c]; });
+  if(!pedidos.length){ aviso('msgAlta','Marca al menos un documento como Nuevo o Actualizar.','error'); return; }
+
+  ocupado = true;
+  mostrarOverlay('espera','Dando de alta...', clienteAlta.nombre);
+
+  enviar({
+    accion:'crearAsignacion', clave: clave, mes: mes, supervisor: supervisor,
+    vendedor: vend, codigo: clienteAlta.codigo, nombre: clienteAlta.nombre, req: reqAlta
+  }).then(function(r){
+    ocupado = false;
+    if(r.resultado.duplicado){
+      mostrarOverlay('mal','Ya existe', r.resultado.mensaje, [
+        {texto:'Entendido', accion: ocultarOverlay}
+      ]);
+      return;
+    }
+    return cargar().then(function(){
+      mostrarOverlay('ok','Cliente dado de alta',
+        clienteAlta.nombre + ' — ' + pedidos.length + ' documentos solicitados');
+      setTimeout(function(){
+        ocultarOverlay();
+        $('altaBusqueda').value = '';
+        $('altaFicha').style.display = 'none';
+        $('altaRequisitos').style.display = 'none';
+        clienteAlta = null; reqAlta = {};
+        actualizarResumenSupervisor();
+      }, 1500);
+    });
+  }).catch(function(err){
+    ocupado = false;
+    ocultarOverlay();
+    aviso('msgAlta','No se pudo dar de alta: ' + err.message, 'error');
+  });
+}
+
+/* ── Lista de asignaciones ─────────────────────────────────────────── */
+
+function abrirRevision(){
+  prepararLista();
+  irA('pLista');
+}
+
+function prepararLista(){
+  var meses = [];
+  asignaciones.forEach(function(a){ if(a.mes && meses.indexOf(a.mes) === -1) meses.push(a.mes); });
+  meses.sort().reverse();
+
+  $('fMes').innerHTML = '<option value="">Todos los meses</option>' +
+    meses.map(function(m){ return '<option value="'+escapar(m)+'">'+escapar(nombreMes(m))+'</option>'; }).join('');
+  if(meses.length) $('fMes').value = meses[0];
+
+  if(rol === 'SUPERVISOR'){
+    $('bloqueVendedor').style.display = 'block';
+    $('fVendedor').innerHTML = '<option value="">Todos los vendedores</option>' +
+      vendedores.map(function(v){ return '<option value="'+escapar(v)+'">'+escapar(v)+'</option>'; }).join('');
+  }else{
+    $('bloqueVendedor').style.display = 'none';
+  }
+
+  $('fBusqueda').value = '';
+  pintarLista();
+}
+
+function universo(){
+  var mes = $('fMes').value;
+  var vend = rol === 'SUPERVISOR' ? $('fVendedor').value : vendedorActivo;
+  return asignaciones.filter(function(a){
+    if(mes && a.mes !== mes) return false;
+    if(vend && a.vendedor !== vend) return false;
+    return true;
+  });
+}
+
+function cuentaRequeridos(a){
+  return CONCEPTOS.filter(function(c){ return a.req[c]; }).length;
+}
+function cuentaCumplidos(a){
+  return CONCEPTOS.filter(function(c){ return a.req[c] && a.ok[c]; }).length;
+}
+function cuentaConEvidencia(a){
+  return CONCEPTOS.filter(function(c){
+    return a.req[c] && a.evidencias[c] && (a.evidencias[c].link || a.evidencias[c].nota);
+  }).length;
+}
+
+function pintarLista(){
+  var base = universo();
+  var texto = norm($('fBusqueda').value);
+  var filtro = $('fMes').getAttribute('data-estatus') || 'todos';
+
+  var completos = base.filter(function(a){ return a.estatus === 'COMPLETO'; }).length;
+  $('lTotal').textContent = base.length;
+  $('lCompletos').textContent = completos;
+  $('lPendientes').textContent = base.length - completos;
+
+  var mes = $('fMes').value;
+  var vend = rol === 'SUPERVISOR' ? $('fVendedor').value : vendedorActivo;
+  var partes = [];
+  if(mes) partes.push('<strong>' + escapar(nombreMes(mes)) + '</strong>');
+  if(vend) partes.push('vendedor <strong>' + escapar(vend) + '</strong>');
+  $('lContexto').innerHTML = partes.length
+    ? partes.join(' · ') + ': ' + base.length + ' clientes, ' + completos + ' completos, ' + (base.length - completos) + ' pendientes.'
+    : base.length + ' asignaciones en total.';
+
+  var lista = base.filter(function(a){
+    if(texto && norm(a.nombre).indexOf(texto) === -1 && norm(a.codigo).indexOf(texto) === -1) return false;
+    if(filtro === 'completos'  && a.estatus !== 'COMPLETO') return false;
+    if(filtro === 'pendientes' && a.estatus === 'COMPLETO') return false;
+    return true;
+  });
+
+  if(!lista.length){
+    $('listaAsignaciones').innerHTML = '<div class="vacio-lista">' +
+      (base.length ? 'No hay clientes con esos filtros.'
+                   : (rol === 'SUPERVISOR'
+                      ? 'Todavía no hay clientes dados de alta para este periodo.'
+                      : 'No tienes clientes asignados en este periodo.<br>El supervisor de cuentas es quien los asigna.')) +
+      '</div>';
+    return;
+  }
+
+  $('listaAsignaciones').innerHTML = lista.map(function(a){
+    var req = cuentaRequeridos(a);
+    var ok = cuentaCumplidos(a);
+    var ev = cuentaConEvidencia(a);
+    var clase = a.estatus === 'COMPLETO' ? 'completo' : (ok > 0 || ev > 0 ? 'parcial' : 'vacio');
+    var detalle = rol === 'SUPERVISOR'
+      ? ok + ' validados · ' + ev + ' con evidencia'
+      : ev + ' de ' + req + ' con evidencia';
+    return '<div class="item-lista ' + clase + '" data-id="'+escapar(a.id)+'">' +
+      '<div class="datos"><div class="nombre">' + escapar(a.nombre) + '</div>' +
+      '<div class="meta">' + escapar(a.codigo) +
+        (rol === 'SUPERVISOR' && a.vendedor ? ' · ' + escapar(a.vendedor) : '') +
+        ' · ' + detalle + '</div></div>' +
+      '<div><span class="pill">' + (a.estatus === 'COMPLETO' ? 'Completo' : ok + '/' + req) + '</span></div></div>';
+  }).join('');
+
+  Array.prototype.forEach.call(document.querySelectorAll('#listaAsignaciones .item-lista'), function(el){
+    el.addEventListener('click', function(){ abrirDetalle(el.getAttribute('data-id')); });
   });
 }
 
 function filtrarPorTarjeta(cual){
-  $('filtroEstado').value = cual;
-  Array.prototype.forEach.call(document.querySelectorAll('.tarjeta'), function(t){
-    if(t.getAttribute('data-filtro') === cual && cual !== 'todos') t.classList.add('activa');
-    else t.classList.remove('activa');
+  $('fMes').setAttribute('data-estatus', cual);
+  Array.prototype.forEach.call(document.querySelectorAll('#pLista .tarjeta'), function(t){
+    t.classList.toggle('activa', t.getAttribute('data-f') === cual && cual !== 'todos');
   });
   pintarLista();
 }
 
-$('filtroVendedor').addEventListener('change', refrescarPanel);
-$('busqueda').addEventListener('input', pintarLista);
-$('filtroEstado').addEventListener('change', pintarLista);
+/* ── Detalle ───────────────────────────────────────────────────────── */
 
-/* ── Navegación ────────────────────────────────────────────────────── */
+function abrirDetalle(id){
+  var a = null;
+  asignaciones.forEach(function(x){ if(x.id === id) a = x; });
+  if(!a) return;
 
-function irAPanel(){
-  if(guardando) return;
-  $('pantallaCliente').classList.remove('activa');
-  $('pantallaPanel').classList.add('activa');
-  $('btnAtras').style.display = 'none';
-  $('tituloBarra').innerHTML = 'Checklist de Expediente<span class="sub">Clientes de Mayoreo</span>';
-  $('mensaje').style.display = 'none';
-  clienteActivo = null;
-  window.scrollTo(0,0);
-}
-
-function abrirCliente(codigo){
-  var c = null;
-  clientes.forEach(function(x){ if(x.codigo === codigo) c = x; });
-  if(!c) return;
-  clienteActivo = c;
+  asignacionActiva = a;
   borrados = {};
 
-  $('pantallaPanel').classList.remove('activa');
-  $('pantallaCliente').classList.add('activa');
-  $('btnAtras').style.display = 'block';
-  $('tituloBarra').innerHTML = escapar(c.nombre) + '<span class="sub">' + escapar(c.codigo) + '</span>';
-  $('ficha').innerHTML =
-    '<div class="linea"><span class="etiqueta">Cliente</span><span class="valor">' + escapar(c.nombre) + '</span></div>' +
-    '<div class="linea"><span class="etiqueta">Código</span><span class="valor"><strong>' + escapar(c.codigo) + '</strong></span></div>' +
-    '<div class="linea"><span class="etiqueta">Vendedor</span><span class="valor">' + escapar(c.vendedor || '—') + '</span></div>';
+  var cerrado = a.estatus === 'COMPLETO';
+  var esSup = rol === 'SUPERVISOR';
 
-  construirChecklist();
-  $('mensaje').style.display = 'none';
-  window.scrollTo(0,0);
+  $('dFicha').innerHTML =
+    '<div class="linea"><span class="etiqueta">Cliente</span><span class="valor">'+escapar(a.nombre)+'</span></div>' +
+    '<div class="linea"><span class="etiqueta">Código</span><span class="valor"><strong>'+escapar(a.codigo)+'</strong></span></div>' +
+    '<div class="linea"><span class="etiqueta">Vendedor</span><span class="valor">'+escapar(a.vendedor||'—')+'</span></div>' +
+    '<div class="linea"><span class="etiqueta">Mes</span><span class="valor">'+escapar(nombreMes(a.mes))+'</span></div>' +
+    '<div class="linea"><span class="etiqueta">Alta por</span><span class="valor">'+escapar(a.supervisor||'—')+'</span></div>' +
+    '<div class="linea"><span class="etiqueta">Estatus</span><span class="valor"><span class="sello '+
+      (cerrado?'completo':'pendiente')+'">'+(cerrado?'Documentación completa':'Pendiente')+'</span></span></div>' +
+    (cerrado && a.fechaCompletado ? '<div class="linea"><span class="etiqueta">Cerrado</span><span class="valor">'+
+      escapar(a.fechaCompletado)+(a.cerradoPor?' · '+escapar(a.cerradoPor):'')+'</span></div>' : '');
+
+  $('dAcciones').style.display = (esSup && !cerrado) ? 'flex' : 'none';
+  $('dCaptura').style.display = cerrado ? 'none' : 'block';
+  $('dGuardar').style.display = cerrado ? 'none' : 'block';
+  $('dGuardar').textContent = esSup ? 'Guardar validación' : 'Guardar evidencia';
+  $('dGuardar').className = 'principal' + (esSup ? ' morado' : '');
+  $('msgDetalle').style.display = 'none';
+
+  construirConceptos(a, esSup, cerrado);
+  actualizarProgresoDetalle();
+  irA('pDetalle');
 }
 
-/* ── Checklist ─────────────────────────────────────────────────────── */
+function construirConceptos(a, esSup, cerrado){
+  var html = '';
 
-function construirChecklist(){
-  $('listaConceptos').innerHTML = CONCEPTOS.map(function(c,i){
-    return '<div class="concepto" id="concepto'+i+'">' +
-      '<div class="concepto-fila" onclick="alternarCasilla('+i+')">' +
-        '<div class="caja">&#10003;</div>' +
-        '<div class="concepto-nombre">'+escapar(c)+'</div>' +
-        '<button class="btn-evidencia" id="btnEv'+i+'" onclick="event.stopPropagation(); alternarDetalle('+i+')">+ evidencia</button>' +
+  CONCEPTOS.forEach(function(nombre, i){
+    var requerimiento = a.req[nombre];
+    if(!requerimiento) return;   // no se pidió este documento
+
+    var ev = a.evidencias[nombre] || {};
+    var cumplido = !!a.ok[nombre];
+    var etiqueta = '<span class="etiqueta-req ' + (requerimiento === 'NUEVO' ? 'nuevo' : 'actualizar') + '">' +
+                   escapar(requerimiento) + '</span>';
+
+    // La casilla solo la mueve el supervisor
+    var caja = esSup && !cerrado
+      ? '<div class="caja" onclick="alternarCumplido('+i+')">&#10003;</div>'
+      : '<div class="caja bloqueada">&#10003;</div>';
+
+    html += '<div class="concepto ' + (cumplido ? 'completo' : '') + '" id="concepto'+i+'" data-concepto="'+escapar(nombre)+'">' +
+      '<div class="concepto-fila">' + caja +
+        '<div class="concepto-nombre">'+escapar(nombre)+etiqueta+'</div>' +
+        '<button class="btn-evidencia' + (ev.link || ev.nota ? ' tiene' : '') + '" id="btnEv'+i+'" ' +
+          'onclick="alternarDetalle('+i+')">' + (ev.link || ev.nota ? '✓ evidencia' : '+ evidencia') + '</button>' +
       '</div>' +
-      '<div class="detalle">' +
-        '<textarea id="nota'+i+'" placeholder="Comentario u observación (opcional)" oninput="revisarEvidencia('+i+')"></textarea>' +
+      '<div class="detalle">';
+
+    // Evidencia ya registrada
+    if(ev.nota){
+      html += '<div class="nota-guardada"><strong>Comentario:</strong> ' + escapar(ev.nota) +
+              (ev.por ? '<br><span style="font-size:11.5px">— ' + escapar(ev.por) +
+              (ev.fecha ? ', ' + escapar(ev.fecha) : '') + '</span>' : '') + '</div>';
+    }
+    if(ev.link){
+      html += '<div class="caja-registrada visible" id="cajaReg'+i+'">' +
+        '<a id="linkPrevio'+i+'" data-url="'+escapar(ev.link)+'" onclick="verEvidencia('+i+')">Ver foto registrada</a>' +
+        (cerrado ? '' : '<button class="btn-borrar-reg" id="btnBorrarReg'+i+'" onclick="alternarBorrado('+i+')">Borrar</button>') +
+        '</div>';
+    }
+
+    // Campos para agregar evidencia nueva
+    if(!cerrado){
+      html += '<textarea id="nota'+i+'" placeholder="Agregar comentario u observación (opcional)" oninput="revisarEvidencia('+i+')"></textarea>' +
         '<div class="fila-archivo">' +
           '<label class="btn-foto camara" for="camara'+i+'">' +
             '<svg viewBox="0 0 24 24"><path d="M9 2L7.2 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2h-3.2L15 2H9zm3 5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zm0 2a3.5 3.5 0 100 7 3.5 3.5 0 000-7z"/></svg>' +
@@ -478,121 +984,94 @@ function construirChecklist(){
           '<button class="btn-quitar" id="btnQuitar'+i+'" onclick="quitarAdjunto('+i+')">Quitar</button>' +
           '<span class="nombre-archivo" id="nombreArchivo'+i+'"></span>' +
         '</div>' +
-        '<img class="previa" id="previa'+i+'">' +
-        '<div class="caja-registrada" id="cajaReg'+i+'">' +
-          '<a id="linkPrevio'+i+'" href="#" onclick="event.preventDefault(); verEvidencia('+i+')">Ver foto registrada</a>' +
-          '<button class="btn-borrar-reg" id="btnBorrarReg'+i+'" onclick="alternarBorrado('+i+')">Borrar</button>' +
-        '</div>' +
-      '</div></div>';
-  }).join('');
-
-  CONCEPTOS.forEach(function(c,i){
-    var prev = clienteActivo.estado[c];
-    if(!prev) return;
-    if(prev.link){
-      $('linkPrevio'+i).setAttribute('data-url', prev.link);
-      $('cajaReg'+i).classList.add('visible');
-      $('btnEv'+i).textContent = '✓ evidencia';
-      $('btnEv'+i).classList.add('tiene');
+        '<img class="previa" id="previa'+i+'">';
     }
-    if(prev.marcado) $('concepto'+i).classList.add('completo');
+
+    html += '</div></div>';
   });
-  actualizarProgreso();
+
+  $('dConceptos').innerHTML = html || '<div class="vacio-lista">Esta asignación no tiene documentos solicitados.</div>';
+
+  // Botón de cierre: solo supervisor, solo si no está cerrado
+  var puedeCerrar = rol === 'SUPERVISOR' && !cerrado && cuentaRequeridos(a) > 0;
+  $('dCerrar').style.display = puedeCerrar ? 'block' : 'none';
 }
 
-/** Devuelve el archivo adjunto del concepto, venga de cámara o de galería. */
+function indiceDe(nombre){ return CONCEPTOS.indexOf(nombre); }
+
+function alternarCumplido(i){
+  $('concepto'+i).classList.toggle('completo');
+  actualizarProgresoDetalle();
+}
+function alternarDetalle(i){ $('concepto'+i).classList.toggle('abierto'); }
+
+function marcarTodos(v){
+  Array.prototype.forEach.call(document.querySelectorAll('#dConceptos .concepto'), function(el){
+    el.classList.toggle('completo', v);
+  });
+  actualizarProgresoDetalle();
+}
+
+function actualizarProgresoDetalle(){
+  var total = document.querySelectorAll('#dConceptos .concepto').length;
+  var hechos = document.querySelectorAll('#dConceptos .concepto.completo').length;
+  $('dProgreso').textContent = hechos + ' de ' + total;
+  $('dBarra').style.width = total ? Math.round(hechos/total*100) + '%' : '0%';
+}
+
+/* ── Evidencia ─────────────────────────────────────────────────────── */
+
 function archivoDe(i){
-  var cam = $('camara'+i);
-  var gal = $('foto'+i);
+  var cam = $('camara'+i), gal = $('foto'+i);
   if(cam && cam.files[0]) return cam.files[0];
   if(gal && gal.files[0]) return gal.files[0];
   return null;
 }
-
-/** Limpia los dos campos de archivo del concepto. */
 function limpiarArchivos(i){
   if($('camara'+i)) $('camara'+i).value = '';
   if($('foto'+i)) $('foto'+i).value = '';
 }
 
-function verEvidencia(i){
-  var url = $('linkPrevio'+i).getAttribute('data-url');
-  if(url) abrirVisor(url, CONCEPTOS[i]);
-}
-
-function alternarCasilla(i){ $('concepto'+i).classList.toggle('completo'); actualizarProgreso(); }
-function alternarDetalle(i){ $('concepto'+i).classList.toggle('abierto'); }
-function marcarTodos(v){
-  CONCEPTOS.forEach(function(c,i){
-    if(v) $('concepto'+i).classList.add('completo');
-    else $('concepto'+i).classList.remove('completo');
-  });
-  actualizarProgreso();
-}
-
-/** Quita la foto que se acaba de adjuntar (aún no subida) y limpia el comentario. */
-function quitarAdjunto(i){
-  limpiarArchivos(i);
-  $('nombreArchivo'+i).textContent = '';
-  $('previa'+i).style.display = 'none';
-  $('previa'+i).src = '';
-  $('nota'+i).value = '';
-  $('btnQuitar'+i).style.display = 'none';
-  if(!$('cajaReg'+i).classList.contains('visible')){
-    $('btnEv'+i).textContent = '+ evidencia';
-    $('btnEv'+i).classList.remove('tiene');
-  }
-  actualizarProgreso();
-}
-
-/** Marca (o desmarca) la evidencia YA guardada para borrarse al guardar. */
-function alternarBorrado(i){
-  var caja = $('cajaReg'+i);
-  var boton = $('btnBorrarReg'+i);
-  if(borrados[i]){
-    delete borrados[i];
-    caja.classList.remove('borrada');
-    boton.textContent = 'Borrar';
-    boton.classList.remove('deshacer');
-  }else{
-    borrados[i] = true;
-    caja.classList.add('borrada');
-    boton.textContent = 'Deshacer';
-    boton.classList.add('deshacer');
-  }
-}
-
-function revisarEvidencia(i){
-  var hayLocal = $('nota'+i).value.trim() || archivoDe(i);
-  $('btnQuitar'+i).style.display = hayLocal ? 'inline-block' : 'none';
-  if(hayLocal){
-    $('concepto'+i).classList.add('completo');
-    $('btnEv'+i).classList.add('tiene');
-  }
-  actualizarProgreso();
-}
-
-function actualizarProgreso(){
-  var hechos = document.querySelectorAll('#listaConceptos .concepto.completo').length;
-  $('textoProgreso').textContent = hechos + ' de ' + CONCEPTOS.length;
-  $('barraProgreso').style.width = Math.round(hechos/CONCEPTOS.length*100) + '%';
-}
-
 function cargarFoto(i, origen){
   var archivo = $(origen + i).files[0];
   if(!archivo) return;
-  // Solo puede haber una foto por concepto: si venía de la otra fuente, se descarta
   if(origen === 'camara' && $('foto'+i)) $('foto'+i).value = '';
   if(origen === 'foto' && $('camara'+i)) $('camara'+i).value = '';
   $('nombreArchivo'+i).textContent = (origen === 'camara' ? 'Foto tomada' : archivo.name);
   var lector = new FileReader();
   lector.onload = function(e){
     var img = $('previa'+i);
-    img.src = e.target.result;
-    img.style.display = 'block';
+    img.src = e.target.result; img.style.display = 'block';
   };
   lector.readAsDataURL(archivo);
   revisarEvidencia(i);
+}
+
+function quitarAdjunto(i){
+  limpiarArchivos(i);
+  $('nombreArchivo'+i).textContent = '';
+  if($('previa'+i)){ $('previa'+i).style.display = 'none'; $('previa'+i).src = ''; }
+  if($('nota'+i)) $('nota'+i).value = '';
+  $('btnQuitar'+i).style.display = 'none';
+}
+
+function revisarEvidencia(i){
+  var hay = ($('nota'+i) && $('nota'+i).value.trim()) || archivoDe(i);
+  if($('btnQuitar'+i)) $('btnQuitar'+i).style.display = hay ? 'inline-block' : 'none';
+  if(hay) $('btnEv'+i).classList.add('tiene');
+}
+
+function alternarBorrado(i){
+  var caja = $('cajaReg'+i), boton = $('btnBorrarReg'+i);
+  if(borrados[i]){
+    delete borrados[i];
+    caja.classList.remove('borrada');
+    boton.textContent = 'Borrar'; boton.classList.remove('deshacer');
+  }else{
+    borrados[i] = true;
+    caja.classList.add('borrada');
+    boton.textContent = 'Deshacer'; boton.classList.add('deshacer');
+  }
 }
 
 function comprimirImagen(archivo){
@@ -624,26 +1103,194 @@ function comprimirImagen(archivo){
   });
 }
 
+function subirConReintento(carga, intentos){
+  return enviar(carga, LIMITE_FOTO).catch(function(err){
+    if(intentos > 0){
+      return new Promise(function(res){ setTimeout(res, 1500); })
+        .then(function(){ return subirConReintento(carga, intentos - 1); });
+    }
+    throw err;
+  });
+}
+
+/* ── Guardar detalle ───────────────────────────────────────────────── */
+
+function guardarDetalle(){
+  var a = asignacionActiva;
+  if(!a || ocupado) return;
+
+  ocupado = true;
+  $('dGuardar').disabled = true;
+  $('msgDetalle').style.display = 'none';
+
+  // Recolectar por concepto solicitado
+  var items = [];
+  Array.prototype.forEach.call(document.querySelectorAll('#dConceptos .concepto'), function(el){
+    var nombre = el.getAttribute('data-concepto');
+    var i = indiceDe(nombre);
+    items.push({
+      indice: i,
+      concepto: nombre,
+      nota: ($('nota'+i) && $('nota'+i).value.trim()) || '',
+      archivo: archivoDe(i),
+      borrar: !!borrados[i],
+      cumplido: el.classList.contains('completo'),
+      link: ''
+    });
+  });
+
+  var conFoto = items.filter(function(x){ return x.archivo; });
+  var cadena = Promise.resolve();
+
+  conFoto.forEach(function(item, k){
+    cadena = cadena.then(function(){
+      mostrarOverlay('espera', 'Subiendo foto ' + (k+1) + ' de ' + conFoto.length, item.concepto);
+      return comprimirImagen(item.archivo).then(function(comp){
+        return subirConReintento({
+          accion:'foto', codigo:a.codigo, nombre:a.nombre, concepto:item.concepto,
+          fotoBase64:comp.base64, fotoTipo:comp.tipo,
+          fotoNombre: a.codigo + '_' + item.concepto.replace(/\s+/g,'_') + '_' + Date.now() + '.jpg'
+        }, 2);
+      }).then(function(r){
+        item.link = r.link;
+        item.borrar = false;
+      });
+    });
+  });
+
+  // 1) Evidencias (comentarios, fotos, borrados)
+  cadena = cadena.then(function(){
+    var conEvidencia = items.filter(function(x){ return x.nota || x.link || x.borrar; });
+    if(!conEvidencia.length) return null;
+    mostrarOverlay('espera', 'Guardando evidencia', a.nombre);
+    return enviar({
+      accion:'guardarEvidencia', id: a.id, rol: rol,
+      capturadoPor: $('dCapturadoPor').value.trim(),
+      items: conEvidencia.map(function(x){
+        return { concepto:x.concepto, nota:x.nota, link:x.link, borrar:x.borrar };
+      })
+    });
+  });
+
+  // 2) Validación (solo supervisor)
+  cadena = cadena.then(function(){
+    if(rol !== 'SUPERVISOR') return null;
+    mostrarOverlay('espera', 'Guardando validación', a.nombre);
+    var cumplidos = {};
+    items.forEach(function(x){ cumplidos[x.concepto] = x.cumplido; });
+    return enviar({ accion:'marcarCumplidos', clave: clave, id: a.id, cumplidos: cumplidos });
+  });
+
+  cadena.then(function(){
+    return cargar();
+  }).then(function(){
+    ocupado = false;
+    $('dGuardar').disabled = false;
+    asignaciones.forEach(function(x){ if(x.id === a.id) asignacionActiva = x; });
+
+    mostrarOverlay('ok','Guardado',
+      rol === 'SUPERVISOR' ? 'Validación actualizada' : 'Evidencia enviada al supervisor');
+    setTimeout(function(){
+      ocultarOverlay();
+      volverALista();
+    }, 1400);
+  }).catch(function(err){
+    ocupado = false;
+    $('dGuardar').disabled = false;
+    ocultarOverlay();
+    aviso('msgDetalle','No se pudo guardar: ' + err.message, 'error');
+  });
+}
+
+/* ── Cerrar expediente ─────────────────────────────────────────────── */
+
+function pedirCierre(){
+  var a = asignacionActiva;
+  if(!a || ocupado) return;
+
+  var total = document.querySelectorAll('#dConceptos .concepto').length;
+  var hechos = document.querySelectorAll('#dConceptos .concepto.completo').length;
+
+  if(hechos < total){
+    mostrarOverlay('mal','Faltan documentos',
+      'Tienes ' + hechos + ' de ' + total + ' validados. Guarda primero la validación o palomea los que falten.',
+      [{texto:'Entendido', accion: ocultarOverlay}]);
+    return;
+  }
+
+  mostrarOverlay('mal','¿Cerrar expediente?',
+    'Vas a marcar a ' + a.nombre + ' como documentación completa. El vendedor ya no podrá subir evidencia.',
+    [
+      {texto:'Sí, marcar como completa', clase:'rojo', accion: function(){ cerrarExpediente(true); }},
+      {texto:'Cancelar', accion: ocultarOverlay}
+    ]);
+}
+
+function cerrarExpediente(forzar){
+  var a = asignacionActiva;
+  ocupado = true;
+  mostrarOverlay('espera','Cerrando expediente', a.nombre);
+
+  // Primero guarda la validación actual, luego cierra
+  var cumplidos = {};
+  Array.prototype.forEach.call(document.querySelectorAll('#dConceptos .concepto'), function(el){
+    cumplidos[el.getAttribute('data-concepto')] = el.classList.contains('completo');
+  });
+
+  enviar({ accion:'marcarCumplidos', clave: clave, id: a.id, cumplidos: cumplidos })
+  .then(function(){
+    return enviar({ accion:'cerrarAsignacion', clave: clave, id: a.id,
+                    supervisor: $('dCapturadoPor').value.trim(), forzar: !!forzar });
+  })
+  .then(function(r){
+    if(!r.resultado.cerrado){
+      ocupado = false;
+      mostrarOverlay('mal','No se pudo cerrar',
+        'Faltan por validar: ' + r.resultado.faltantes.join(', '),
+        [{texto:'Entendido', accion: ocultarOverlay}]);
+      return null;
+    }
+    return cargar();
+  })
+  .then(function(hecho){
+    if(hecho === null) return;
+    ocupado = false;
+    mostrarOverlay('ok','Documentación completa', a.nombre + ' quedó actualizado');
+    setTimeout(function(){
+      ocultarOverlay();
+      volverALista();
+      actualizarResumenSupervisor();
+    }, 1600);
+  })
+  .catch(function(err){
+    ocupado = false;
+    ocultarOverlay();
+    aviso('msgDetalle','No se pudo cerrar: ' + err.message, 'error');
+  });
+}
+
 /* ── Visor de imagen ───────────────────────────────────────────────── */
 
-/** Saca el ID de Drive de un link tipo .../file/d/ID/view o ...?id=ID */
 function idDeDrive(url){
   if(!url) return '';
-  var m = String(url).match(/\/d\/([a-zA-Z0-9_-]{10,})/) ||
-          String(url).match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+  var m = String(url).match(/\/d\/([a-zA-Z0-9_-]{10,})/) || String(url).match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
   return m ? m[1] : '';
+}
+
+function verEvidencia(i){
+  var el = $('linkPrevio'+i);
+  if(el) abrirVisor(el.getAttribute('data-url'), CONCEPTOS[i]);
 }
 
 function abrirVisor(url, titulo){
   var id = idDeDrive(url);
   $('visorTitulo').textContent = titulo || 'Evidencia';
-  $('visorDrive').href = url;
   $('visorDescargar').style.display = 'none';
   $('visorCuerpo').innerHTML = '<div class="visor-estado"><div class="circulo"></div>Cargando imagen...</div>';
   $('visor').classList.add('visible');
 
   if(!id){
-    $('visorCuerpo').innerHTML = '<div class="visor-estado">No se pudo leer el identificador de la imagen.<br>Usa "Abrir en Drive".</div>';
+    $('visorCuerpo').innerHTML = '<div class="visor-estado">No se pudo leer el identificador de la imagen.</div>';
     return;
   }
 
@@ -653,18 +1300,15 @@ function abrirVisor(url, titulo){
     var src = 'data:' + (r.tipo || 'image/jpeg') + ';base64,' + r.base64;
     $('visorCuerpo').innerHTML = '';
     var img = new Image();
-    img.src = src;
-    img.alt = r.nombre || 'Evidencia';
+    img.src = src; img.alt = r.nombre || 'Evidencia';
     $('visorCuerpo').appendChild(img);
     $('visorTitulo').textContent = r.nombre || titulo || 'Evidencia';
     var d = $('visorDescargar');
-    d.href = src;
-    d.setAttribute('download', r.nombre || 'evidencia.jpg');
+    d.href = src; d.setAttribute('download', r.nombre || 'evidencia.jpg');
     d.style.display = 'inline-block';
   })
   .catch(function(err){
-    $('visorCuerpo').innerHTML = '<div class="visor-estado">No se pudo cargar la imagen.<br><br>' +
-      escapar(err.message) + '</div>';
+    $('visorCuerpo').innerHTML = '<div class="visor-estado">No se pudo cargar la imagen.<br><br>' + escapar(err.message) + '</div>';
   });
 }
 
@@ -677,9 +1321,9 @@ document.addEventListener('keydown', function(e){
   if(e.key === 'Escape' && $('visor').classList.contains('visible')) cerrarVisor();
 });
 
-/* ── Overlay ───────────────────────────────────────────────────────── */
+/* ── Overlay y mensajes ────────────────────────────────────────────── */
 
-function mostrarOverlay(estado, texto, subtexto, permitirCerrar){
+function mostrarOverlay(estado, texto, subtexto, botones){
   var circulo = $('circulo');
   circulo.className = 'circulo ' + (estado === 'ok' ? 'ok' : estado === 'mal' ? 'mal' : 'espera');
   circulo.innerHTML = estado === 'ok'
@@ -687,126 +1331,30 @@ function mostrarOverlay(estado, texto, subtexto, permitirCerrar){
     : (estado === 'mal' ? '!' : '');
   $('textoOverlay').textContent = texto;
   $('subtextoOverlay').textContent = subtexto || '';
-  $('btnCerrarOverlay').style.display = permitirCerrar ? 'inline-block' : 'none';
+
+  var caja = $('botonesOverlay');
+  caja.innerHTML = '';
+  if(botones && botones.length){
+    botones.forEach(function(b){
+      var btn = document.createElement('button');
+      btn.textContent = b.texto;
+      if(b.clase) btn.className = b.clase;
+      btn.onclick = b.accion;
+      caja.appendChild(btn);
+    });
+    caja.classList.add('visible');
+  }else{
+    caja.classList.remove('visible');
+  }
   $('overlay').classList.add('visible');
 }
+
 function ocultarOverlay(){ $('overlay').classList.remove('visible'); }
-function aviso(texto, tipo){ var m = $('mensaje'); m.textContent = texto; m.className = 'mensaje ' + tipo; }
 
-/* ── Guardar ───────────────────────────────────────────────────────── */
-
-function enviarPost(cuerpo, limite){
-  return peticion(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(cuerpo)
-  }, limite);
-}
-
-function subirConReintento(carga, intentosRestantes){
-  return enviarPost(carga, LIMITE_FOTO).catch(function(err){
-    if(intentosRestantes > 0){
-      return new Promise(function(res){ setTimeout(res, 1500); })
-        .then(function(){ return subirConReintento(carga, intentosRestantes - 1); });
-    }
-    throw err;
-  });
-}
-
-function guardar(){
-  var c = clienteActivo;
-  if(!c || guardando) return;
-
-  guardando = true;
-  $('btnGuardar').disabled = true;
-  $('mensaje').style.display = 'none';
-
-  var items = CONCEPTOS.map(function(nombre, i){
-    return {
-      indice: i,
-      concepto: nombre,
-      nota: $('nota'+i).value.trim(),
-      marcado: $('concepto'+i).classList.contains('completo'),
-      archivo: archivoDe(i),
-      link: borrados[i] ? '' : ((c.estado[nombre] && c.estado[nombre].link) || ''),
-      borrarEvidencia: !!borrados[i],
-      esNuevo: false
-    };
-  });
-
-  var conFoto = items.filter(function(x){ return x.archivo; });
-
-  var cadena = Promise.resolve();
-  conFoto.forEach(function(item, k){
-    cadena = cadena.then(function(){
-      mostrarOverlay('espera', 'Subiendo foto ' + (k+1) + ' de ' + conFoto.length, item.concepto);
-      return comprimirImagen(item.archivo).then(function(comp){
-        return subirConReintento({
-          accion: 'foto',
-          codigo: c.codigo,
-          nombre: c.nombre,
-          concepto: item.concepto,
-          fotoBase64: comp.base64,
-          fotoTipo: comp.tipo,
-          fotoNombre: c.codigo + '_' + item.concepto.replace(/\s+/g,'_') + '_' + Date.now() + '.jpg'
-        }, 2);
-      }).then(function(r){
-        item.link = r.link;
-        item.borrarEvidencia = false; // una foto nueva reemplaza a la borrada
-        item.esNuevo = true;
-      });
-    });
-  });
-
-  cadena.then(function(){
-    mostrarOverlay('espera', 'Guardando checklist', c.nombre);
-    items.forEach(function(x){ if(x.nota) x.esNuevo = true; });
-    return enviarPost({
-      accion: 'guardar',
-      codigo: c.codigo,
-      nombre: c.nombre,
-      vendedor: c.vendedor,
-      capturadoPor: $('capturadoPor').value.trim(),
-      conceptos: items.map(function(x){
-        return {
-          concepto:x.concepto, nota:x.nota, marcado:x.marcado,
-          link:x.link, esNuevo:x.esNuevo, borrarEvidencia:x.borrarEvidencia
-        };
-      })
-    }, LIMITE_NORMAL);
-  }).then(function(respuesta){
-    var r = respuesta.resultado;
-    c.estado = r.estado || {};
-    borrados = {};
-    // Reflejar los links nuevos en la pantalla sin tener que recargar
-    CONCEPTOS.forEach(function(nombre, i){
-      var est = c.estado[nombre];
-      var caja = $('cajaReg'+i);
-      if(!caja) return;
-      if(est && est.link){
-        $('linkPrevio'+i).setAttribute('data-url', est.link);
-        caja.classList.add('visible');
-        caja.classList.remove('borrada');
-        $('btnBorrarReg'+i).textContent = 'Borrar';
-        $('btnBorrarReg'+i).classList.remove('deshacer');
-      }else{
-        caja.classList.remove('visible', 'borrada');
-      }
-      limpiarArchivos(i);
-      $('nombreArchivo'+i).textContent = '';
-      $('previa'+i).style.display = 'none';
-      $('btnQuitar'+i).style.display = 'none';
-    });
-    refrescarPanel();
-    mostrarOverlay('ok', 'Guardado', c.nombre + ' — ' + r.completos + ' de ' + r.total + ' requisitos');
-    setTimeout(function(){ ocultarOverlay(); irAPanel(); }, 1400);
-  }).catch(function(err){
-    mostrarOverlay('mal', 'No se guardó', err.message, true);
-    aviso('No se pudo guardar: ' + err.message, 'error');
-  }).then(function(){
-    guardando = false;
-    $('btnGuardar').disabled = false;
-  });
+function aviso(id, texto, tipo){
+  var m = $(id);
+  m.textContent = texto;
+  m.className = 'mensaje ' + tipo;
 }
 
 iniciar();
