@@ -470,12 +470,29 @@ function mesActual(){
   var d = new Date();
   return d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2);
 }
-function nombreMes(m){
-  if(!m) return '';
-  var partes = m.split('-');
-  var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+var MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+             'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+/** Acepta "2026-09" o una fecha completa y siempre devuelve "2026-09". */
+function claveMes(v){
+  if(!v) return '';
+  var texto = String(v).trim();
+  var m = texto.match(/^(\d{4})-(\d{2})/);
+  if(m) return m[1] + '-' + m[2];
+  var d = new Date(texto);
+  if(!isNaN(d.getTime())){
+    return d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2);
+  }
+  return texto;
+}
+
+/** Devuelve "Septiembre 2026". */
+function nombreMes(v){
+  var clave = claveMes(v);
+  var partes = clave.split('-');
+  if(partes.length < 2) return clave;
   var i = parseInt(partes[1],10) - 1;
-  return (meses[i] || m) + ' ' + partes[0];
+  return (MESES[i] || clave) + ' ' + partes[0];
 }
 
 /* ── Peticiones ────────────────────────────────────────────────────── */
@@ -535,6 +552,8 @@ function cargar(silencioso){
     CONCEPTOS = r.datos.conceptos;
     catalogo = r.datos.clientes;
     asignaciones = r.datos.asignaciones;
+    // Blindaje: si alguna fila vieja trae el mes como fecha completa, se normaliza aquí
+    asignaciones.forEach(function(a){ a.mes = claveMes(a.mes); });
 
     vendedores = [];
     catalogo.forEach(function(c){
