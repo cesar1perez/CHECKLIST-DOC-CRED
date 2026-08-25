@@ -217,6 +217,42 @@
   .carga-inicial .circulo{border:5px solid var(--azul-claro); border-top-color:var(--azul); animation:girar .8s linear infinite;}
   .btn-reintentar{margin-top:16px; padding:11px 20px; background:var(--azul); color:#fff; border:none;
                   border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;}
+  /* ── Avance por vendedor (compacto para celular) ── */
+  .bloque-est{margin-top:24px; border-top:1px solid var(--borde); padding-top:16px;}
+  .est-cabecera{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .est-titulo{flex:1; font-size:11.5px; font-weight:700; color:var(--azul);
+              text-transform:uppercase; letter-spacing:.4px;}
+  .est-mes{width:auto; max-width:150px; margin:0; padding:6px 26px 6px 9px; font-size:12.5px;
+           border-radius:7px; background-position:right 8px center;}
+
+  .est-fila{border:1px solid var(--borde); border-radius:8px; margin-bottom:6px; overflow:hidden; background:#fff;}
+  .est-cab{display:flex; align-items:center; gap:9px; padding:9px 11px; cursor:pointer;}
+  .est-cab:active{background:var(--azul-claro);}
+  .est-nom{flex:1; font-size:13.5px; font-weight:600; overflow:hidden;
+           text-overflow:ellipsis; white-space:nowrap;}
+  .est-medidor{width:44px; height:5px; background:#dfe5eb; border-radius:3px; overflow:hidden; flex-shrink:0;}
+  .est-medidor div{height:100%; background:var(--verde); width:0;}
+  .est-cuenta{font-size:12px; font-weight:700; padding:3px 8px; border-radius:10px;
+              background:#e8edf2; color:var(--tenue); flex-shrink:0; min-width:42px; text-align:center;}
+  .est-fila.lleno .est-cuenta{background:var(--verde); color:#fff;}
+  .est-fila.parte .est-cuenta{background:var(--ambar-suave); color:var(--ambar);}
+  .est-flecha{font-size:10px; color:#9aa7b4; flex-shrink:0; transition:transform .2s;}
+  .est-fila.abierto .est-flecha{transform:rotate(90deg);}
+
+  .est-detalle{display:none; border-top:1px solid #eef1f4; background:#fafbfc;}
+  .est-fila.abierto .est-detalle{display:block;}
+  .est-cli{display:flex; align-items:center; gap:8px; padding:7px 11px 7px 14px; border-bottom:1px solid #eef1f4;}
+  .est-cli:last-child{border-bottom:none;}
+  .est-punto{width:7px; height:7px; border-radius:50%; background:#cbd4dd; flex-shrink:0;}
+  .est-punto.ok{background:var(--verde);}
+  .est-punto.medio{background:var(--ambar);}
+  .est-cli-txt{flex:1; min-width:0;}
+  .est-cli-nom{font-size:12.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .est-cli-cod{font-size:11px; color:var(--tenue);}
+  .est-cli-num{font-size:11px; font-weight:700; color:var(--tenue); flex-shrink:0;}
+  .est-pie{font-size:11.5px; color:var(--tenue); text-align:center; margin-top:9px;}
+  .est-vacio{font-size:13px; color:var(--tenue); text-align:center; padding:18px 10px;}
+
   .paso-diag{border:1px solid var(--borde); border-radius:9px; padding:11px 13px; margin-bottom:8px;}
   .paso-diag.ok{border-left:4px solid var(--verde);}
   .paso-diag.mal{border-left:4px solid var(--rojo); background:var(--rojo-suave);}
@@ -271,7 +307,16 @@
       <div class="flecha">&#8250;</div>
     </div>
 
-    <div style="text-align:center; margin-top:22px">
+    <div class="bloque-est" id="bloqueEst">
+      <div class="est-cabecera">
+        <span class="est-titulo">Avance por vendedor</span>
+        <select id="estMes" class="est-mes" onchange="pintarEstadisticas()"></select>
+      </div>
+      <div id="estLista"></div>
+      <div class="est-pie" id="estPie"></div>
+    </div>
+
+    <div style="text-align:center; margin-top:18px">
       <button class="btn-mini" style="max-width:230px; margin:0 auto" onclick="abrirDiagnostico()">
         Diagnóstico del sistema
       </button>
@@ -578,7 +623,10 @@ function cargar(silencioso){
 }
 
 function iniciar(){
-  cargar().then(function(){ irA('pInicio', true); }).catch(function(){});
+  cargar().then(function(){
+    prepararEstadisticas();
+    irA('pInicio', true);
+  }).catch(function(){});
 }
 
 /* ── Navegación ────────────────────────────────────────────────────── */
@@ -777,6 +825,7 @@ function guardarAlta(){
     // Refrescar en segundo plano; si falla, el alta sigue siendo válida
     cargar(true).then(function(){
       actualizarResumenSupervisor();
+      prepararEstadisticas();
     }).catch(function(){});
 
     setTimeout(ocultarOverlay, 1600);
@@ -1259,6 +1308,7 @@ function guardarDetalle(){
     ocupado = false;
     $('dGuardar').disabled = false;
     asignaciones.forEach(function(x){ if(x.id === a.id) asignacionActiva = x; });
+    prepararEstadisticas();
 
     mostrarOverlay('ok','Guardado',
       rol === 'SUPERVISOR' ? 'Validación actualizada' : 'Evidencia enviada al supervisor');
@@ -1334,6 +1384,7 @@ function cerrarExpediente(forzar){
       ocultarOverlay();
       volverALista();
       actualizarResumenSupervisor();
+      prepararEstadisticas();
     }, 1600);
   })
   .catch(function(err){
@@ -1457,6 +1508,96 @@ function aviso(id, texto, tipo){
   var m = $(id);
   m.textContent = texto;
   m.className = 'mensaje ' + tipo;
+}
+
+/* ── Avance por vendedor ───────────────────────────────────────────── */
+
+function prepararEstadisticas(){
+  var meses = [];
+  asignaciones.forEach(function(x){
+    if(x.mes && meses.indexOf(x.mes) === -1) meses.push(x.mes);
+  });
+  meses.sort().reverse();
+
+  if(!meses.length){
+    $('estMes').innerHTML = '<option value="">Sin datos</option>';
+    $('estLista').innerHTML = '<div class="est-vacio">Todavía no hay clientes asignados.</div>';
+    $('estPie').textContent = '';
+    return;
+  }
+
+  var previo = $('estMes').value;
+  $('estMes').innerHTML = meses.map(function(m){
+    return '<option value="'+escapar(m)+'">'+escapar(nombreMes(m))+'</option>';
+  }).join('');
+  $('estMes').value = (meses.indexOf(previo) !== -1) ? previo : meses[0];
+
+  pintarEstadisticas();
+}
+
+function pintarEstadisticas(){
+  var mes = $('estMes').value;
+  var delMes = asignaciones.filter(function(a){ return a.mes === mes; });
+
+  if(!delMes.length){
+    $('estLista').innerHTML = '<div class="est-vacio">Sin asignaciones en este mes.</div>';
+    $('estPie').textContent = '';
+    return;
+  }
+
+  // Agrupar por vendedor
+  var porVendedor = {};
+  delMes.forEach(function(a){
+    var v = a.vendedor || 'Sin vendedor';
+    if(!porVendedor[v]) porVendedor[v] = [];
+    porVendedor[v].push(a);
+  });
+
+  var nombres = Object.keys(porVendedor).sort(function(a,b){ return a.localeCompare(b,'es'); });
+  var totalClientes = 0, totalListos = 0;
+
+  $('estLista').innerHTML = nombres.map(function(v, k){
+    var lista = porVendedor[v].slice().sort(function(a,b){
+      return a.nombre.localeCompare(b.nombre,'es');
+    });
+    var listos = lista.filter(function(a){ return a.estatus === 'COMPLETO'; }).length;
+    totalClientes += lista.length;
+    totalListos += listos;
+
+    var pct = lista.length ? Math.round(listos/lista.length*100) : 0;
+    var clase = listos === lista.length ? 'lleno' : (listos > 0 ? 'parte' : '');
+
+    var clientes = lista.map(function(a){
+      var req = cuentaRequeridos(a);
+      var ok = cuentaCumplidos(a);
+      var punto = a.estatus === 'COMPLETO' ? 'ok' : (ok > 0 ? 'medio' : '');
+      return '<div class="est-cli">' +
+        '<span class="est-punto ' + punto + '"></span>' +
+        '<span class="est-cli-txt">' +
+          '<span class="est-cli-nom">' + escapar(a.nombre) + '</span>' +
+          '<span class="est-cli-cod">' + escapar(a.codigo) + '</span>' +
+        '</span>' +
+        '<span class="est-cli-num">' + (a.estatus === 'COMPLETO' ? 'Completo' : ok + '/' + req) + '</span>' +
+      '</div>';
+    }).join('');
+
+    return '<div class="est-fila ' + clase + '" id="estFila'+k+'">' +
+      '<div class="est-cab" onclick="alternarEst('+k+')">' +
+        '<span class="est-nom">' + escapar(v) + '</span>' +
+        '<span class="est-medidor"><div style="width:'+pct+'%"></div></span>' +
+        '<span class="est-cuenta">' + listos + '/' + lista.length + '</span>' +
+        '<span class="est-flecha">&#9654;</span>' +
+      '</div>' +
+      '<div class="est-detalle">' + clientes + '</div>' +
+    '</div>';
+  }).join('');
+
+  $('estPie').textContent = totalListos + ' de ' + totalClientes +
+    ' clientes con documentación completa en ' + nombreMes(mes) + '.';
+}
+
+function alternarEst(k){
+  $('estFila'+k).classList.toggle('abierto');
 }
 
 /* ── Diagnóstico integrado ─────────────────────────────────────────── */
