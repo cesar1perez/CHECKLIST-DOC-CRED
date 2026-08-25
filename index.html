@@ -217,6 +217,14 @@
   .carga-inicial .circulo{border:5px solid var(--azul-claro); border-top-color:var(--azul); animation:girar .8s linear infinite;}
   .btn-reintentar{margin-top:16px; padding:11px 20px; background:var(--azul); color:#fff; border:none;
                   border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;}
+  .paso-diag{border:1px solid var(--borde); border-radius:9px; padding:11px 13px; margin-bottom:8px;}
+  .paso-diag.ok{border-left:4px solid var(--verde);}
+  .paso-diag.mal{border-left:4px solid var(--rojo); background:var(--rojo-suave);}
+  .paso-diag .t{font-weight:700; font-size:13px; display:flex; justify-content:space-between; gap:10px;}
+  .paso-diag.ok .marca{color:var(--verde); font-size:11.5px;}
+  .paso-diag.mal .marca{color:var(--rojo); font-size:11.5px;}
+  .paso-diag pre{background:#f4f6f8; border-radius:7px; padding:9px; font-size:11px; overflow:auto;
+                 margin:8px 0 0; white-space:pre-wrap; word-break:break-word; max-height:230px;}
   .sugerencias{border:1px solid var(--borde); border-radius:8px; max-height:230px; overflow:auto; margin:-6px 0 13px; display:none;}
   .sugerencias.visible{display:block;}
   .sug{padding:11px 13px; border-bottom:1px solid #eef1f4; cursor:pointer; font-size:14px;}
@@ -262,6 +270,21 @@
       </div>
       <div class="flecha">&#8250;</div>
     </div>
+
+    <div style="text-align:center; margin-top:22px">
+      <button class="btn-mini" style="max-width:230px; margin:0 auto" onclick="abrirDiagnostico()">
+        Diagnóstico del sistema
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ DIAGNÓSTICO ═══ -->
+  <div class="pantalla" id="pDiag">
+    <h2 class="titulo">Diagnóstico del sistema</h2>
+    <p class="desc">Prueba el guardado directamente contra el servidor, sin pasar por la app.</p>
+    <button class="principal" id="btnDiag" onclick="correrDiagnostico()">Ejecutar diagnóstico</button>
+    <button class="btn-secundario" onclick="copiarDiagnostico()">Copiar resultado</button>
+    <div id="salidaDiag" style="margin-top:16px"></div>
   </div>
 
   <!-- ═══ CLAVE ═══ -->
@@ -563,6 +586,7 @@ function mostrarPantalla(id){
     pAlta:     ['Dar de alta', 'Asignar documentación por mes'],
     pLista:    [rol === 'SUPERVISOR' ? 'Revisar y validar' : 'Mis clientes',
                 rol === 'SUPERVISOR' ? 'Expedientes asignados' : vendedorActivo],
+    pDiag:     ['Diagnóstico', 'Prueba del servidor'],
     pDetalle:  [asignacionActiva ? asignacionActiva.nombre : 'Cliente',
                 asignacionActiva ? asignacionActiva.codigo : '']
   };
@@ -740,8 +764,7 @@ function guardarAlta(){
 
   }).catch(function(err){
     ocupado = false;
-    ocultarOverlay();
-    aviso('msgAlta','No se pudo dar de alta: ' + err.message, 'error');
+    errorVisible('msgAlta', err.message);
   });
 }
 
@@ -1227,8 +1250,7 @@ function guardarDetalle(){
   }).catch(function(err){
     ocupado = false;
     $('dGuardar').disabled = false;
-    ocultarOverlay();
-    aviso('msgDetalle','No se pudo guardar: ' + err.message, 'error');
+    errorVisible('msgDetalle', err.message);
   });
 }
 
@@ -1297,8 +1319,7 @@ function cerrarExpediente(forzar){
   })
   .catch(function(err){
     ocupado = false;
-    ocultarOverlay();
-    aviso('msgDetalle','No se pudo cerrar: ' + err.message, 'error');
+    errorVisible('msgDetalle', err.message);
   });
 }
 
@@ -1397,10 +1418,117 @@ function mostrarOverlay(estado, texto, subtexto, botones){
 
 function ocultarOverlay(){ $('overlay').classList.remove('visible'); }
 
+/** Muestra el error en la ventana emergente, no en un mensaje al pie que puede quedar fuera de vista. */
+function errorVisible(idMensaje, texto){
+  mostrarOverlay('mal', 'No se pudo guardar', texto, [
+    { texto:'Copiar el error', accion: function(){
+        if(navigator.clipboard) navigator.clipboard.writeText(texto);
+        else {
+          var a = document.createElement('textarea');
+          a.value = texto; document.body.appendChild(a); a.select();
+          document.execCommand('copy'); document.body.removeChild(a);
+        }
+      }},
+    { texto:'Cerrar', accion: ocultarOverlay }
+  ]);
+  if(idMensaje && $(idMensaje)) aviso(idMensaje, texto, 'error');
+}
+
 function aviso(id, texto, tipo){
   var m = $(id);
   m.textContent = texto;
   m.className = 'mensaje ' + tipo;
+}
+
+/* ── Diagnóstico integrado ─────────────────────────────────────────── */
+
+var crudoDiag = '';
+
+function abrirDiagnostico(){
+  $('salidaDiag').innerHTML = '';
+  crudoDiag = '';
+  irA('pDiag');
+}
+
+function correrDiagnostico(){
+  var btn = $('btnDiag'), salida = $('salidaDiag');
+  btn.disabled = true;
+  salida.innerHTML = '<div class="vacio-lista">Ejecutando pruebas contra el servidor...<br>Puede tardar hasta 30 segundos.</div>';
+
+  var control = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var reloj = setTimeout(function(){ if(control) control.abort(); }, 90000);
+
+  fetch(APPS_SCRIPT_URL + '?accion=diagnostico&t=' + Date.now(),
+        {cache:'no-store', signal: control ? control.signal : undefined})
+  .then(function(resp){
+    clearTimeout(reloj);
+    if(!resp.ok) throw new Error('El servidor respondió HTTP ' + resp.status);
+    return resp.text();
+  })
+  .then(function(texto){
+    crudoDiag = texto;
+    var r;
+    try{ r = JSON.parse(texto); }
+    catch(e){
+      salida.innerHTML = '<div class="mensaje error" style="display:block">El servidor no devolvió JSON. ' +
+        'Suele pasar cuando el despliegue no está en "Cualquier usuario".</div>' +
+        '<pre style="font-size:11px; background:#f4f6f8; padding:10px; border-radius:7px; white-space:pre-wrap">' +
+        escapar(texto.substring(0,1200)) + '</pre>';
+      btn.disabled = false;
+      return;
+    }
+
+    if(!r.pasos){
+      salida.innerHTML = '<div class="mensaje error" style="display:block">El Apps Script respondió, pero no ' +
+        'reconoce el diagnóstico. Falta reimplementarlo:<br><br>' +
+        '<strong>Implementar → Administrar implementaciones → lápiz → Versión: Nueva versión</strong></div>' +
+        '<pre style="font-size:11px; background:#f4f6f8; padding:10px; border-radius:7px; white-space:pre-wrap">' +
+        escapar(JSON.stringify(r, null, 2)) + '</pre>';
+      btn.disabled = false;
+      return;
+    }
+
+    var fallo = r.pasos.filter(function(p){ return !p.ok; });
+    var prueba = r.pasos.filter(function(p){ return p.paso.indexOf('Escritura') === 0; })[0];
+
+    var conclusion;
+    if(fallo.length){
+      conclusion = '<div class="mensaje error" style="display:block"><strong>Falló: ' +
+        escapar(fallo[0].paso) + '</strong><br>' + escapar(fallo[0].error || '') + '</div>';
+    }else if(prueba && prueba.detalle && prueba.detalle.seLeyoDeVuelta){
+      conclusion = '<div class="mensaje exito" style="display:block"><strong>El guardado funciona.</strong><br>' +
+        'Se creó un cliente de prueba, se leyó de vuelta y se borró.</div>';
+    }else{
+      conclusion = '<div class="mensaje aviso" style="display:block">La escritura corrió pero el registro ' +
+        'no se pudo leer de vuelta. Revisa el detalle.</div>';
+    }
+
+    salida.innerHTML = conclusion + r.pasos.map(function(p){
+      return '<div class="paso-diag ' + (p.ok ? 'ok' : 'mal') + '">' +
+        '<div class="t"><span>' + escapar(p.paso) + '</span>' +
+        '<span class="marca">' + (p.ok ? 'OK' : 'FALLA') + '</span></div>' +
+        '<pre>' + escapar(p.ok ? JSON.stringify(p.detalle, null, 2) : p.error) + '</pre></div>';
+    }).join('');
+    btn.disabled = false;
+  })
+  .catch(function(err){
+    clearTimeout(reloj);
+    salida.innerHTML = '<div class="mensaje error" style="display:block">No se pudo contactar al servidor.<br>' +
+      escapar(err.name === 'AbortError' ? 'Se agotó el tiempo de espera (90s).' : err.message) + '</div>';
+    btn.disabled = false;
+  });
+}
+
+function copiarDiagnostico(){
+  var texto = crudoDiag || $('salidaDiag').textContent;
+  if(!texto){ alert('Primero ejecuta el diagnóstico.'); return; }
+  if(navigator.clipboard) navigator.clipboard.writeText(texto);
+  else {
+    var a = document.createElement('textarea');
+    a.value = texto; document.body.appendChild(a); a.select();
+    document.execCommand('copy'); document.body.removeChild(a);
+  }
+  alert('Resultado copiado. Pégalo en la conversación.');
 }
 
 iniciar();
