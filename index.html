@@ -500,10 +500,12 @@ function enviar(cuerpo, limite){
 
 /* ── Arranque ──────────────────────────────────────────────────────── */
 
-function cargar(){
-  $('cargaInicial').innerHTML = '<div class="circulo"></div><div style="margin-top:14px">Cargando información...</div>';
-  $('cargaInicial').style.display = 'block';
-  document.querySelectorAll('.pantalla').forEach(function(p){ p.classList.remove('activa'); });
+function cargar(silencioso){
+  if(!silencioso){
+    $('cargaInicial').innerHTML = '<div class="circulo"></div><div style="margin-top:14px">Cargando información...</div>';
+    $('cargaInicial').style.display = 'block';
+    document.querySelectorAll('.pantalla').forEach(function(p){ p.classList.remove('activa'); });
+  }
 
   return peticion(APPS_SCRIPT_URL + '?accion=datos&t=' + Date.now(), {cache:'no-store'}, LIMITE_NORMAL)
   .then(function(r){
@@ -520,10 +522,11 @@ function cargar(){
     });
     vendedores.sort(function(a,b){ return a.localeCompare(b,'es'); });
 
-    $('cargaInicial').style.display = 'none';
+    if(!silencioso) $('cargaInicial').style.display = 'none';
     return true;
   })
   .catch(function(err){
+    if(silencioso) throw err;
     $('cargaInicial').innerHTML =
       '<div style="color:#c62828; font-weight:700; font-size:16px">No se pudieron cargar los datos</div>' +
       '<div style="margin-top:10px; font-size:13.5px; max-width:430px; margin-left:auto; margin-right:auto">' + escapar(err.message) + '</div>' +
@@ -712,31 +715,46 @@ function guardarAlta(){
     vendedor: vend, codigo: codigo, nombre: nombre, req: reqAlta
   }).then(function(r){
     ocupado = false;
+
+    if(!r || !r.resultado){
+      throw new Error('El Apps Script respondió sin resultado. Seguramente falta volver a ' +
+                      'implementarlo: Implementar → Administrar implementaciones → lápiz → Nueva versión.');
+    }
+
     if(r.resultado.duplicado){
       mostrarOverlay('mal','Ya existe', r.resultado.mensaje, [{texto:'Entendido', accion: ocultarOverlay}]);
-      return null;
+      return;
     }
-    return cargar();
-  }).then(function(hecho){
-    if(hecho === null || hecho === undefined) return;
-    mostrarOverlay('ok','Cliente dado de alta', nombre + ' — ' + pedidos.length + ' documentos solicitados');
-    setTimeout(function(){
-      ocultarOverlay();
-      $('altaCodigo').value = '';
-      $('altaNombre').value = '';
-      $('msgCatalogo').style.display = 'none';
-      reqAlta = {};
-      CONCEPTOS.forEach(function(c,i){
-        $('mNuevo'+i).classList.remove('on');
-        $('mAct'+i).classList.remove('on');
-        $('req'+i).classList.remove('pedido');
-      });
+
+    // El alta ya quedó grabada: se confirma de inmediato, sin esperar la recarga
+    mostrarOverlay('ok','Cliente dado de alta',
+      nombre + ' — ' + pedidos.length + ' documentos solicitados');
+    limpiarFormularioAlta();
+
+    // Refrescar en segundo plano; si falla, el alta sigue siendo válida
+    cargar(true).then(function(){
       actualizarResumenSupervisor();
-    }, 1500);
+    }).catch(function(){});
+
+    setTimeout(ocultarOverlay, 1600);
+
   }).catch(function(err){
     ocupado = false;
     ocultarOverlay();
     aviso('msgAlta','No se pudo dar de alta: ' + err.message, 'error');
+  });
+}
+
+function limpiarFormularioAlta(){
+  $('altaCodigo').value = '';
+  $('altaNombre').value = '';
+  $('msgCatalogo').style.display = 'none';
+  $('msgAlta').style.display = 'none';
+  reqAlta = {};
+  CONCEPTOS.forEach(function(c,i){
+    if($('mNuevo'+i)) $('mNuevo'+i).classList.remove('on');
+    if($('mAct'+i)) $('mAct'+i).classList.remove('on');
+    if($('req'+i)) $('req'+i).classList.remove('pedido');
   });
 }
 
@@ -1194,7 +1212,7 @@ function guardarDetalle(){
   });
 
   cadena.then(function(){
-    return cargar();
+    return cargar(true);
   }).then(function(){
     ocupado = false;
     $('dGuardar').disabled = false;
@@ -1255,6 +1273,9 @@ function cerrarExpediente(forzar){
                     supervisor: 'SUPERVISOR', forzar: !!forzar });
   })
   .then(function(r){
+    if(!r || !r.resultado){
+      throw new Error('El Apps Script respondió sin resultado. Falta volver a implementarlo con Nueva versión.');
+    }
     if(!r.resultado.cerrado){
       ocupado = false;
       mostrarOverlay('mal','No se pudo cerrar',
@@ -1262,7 +1283,7 @@ function cerrarExpediente(forzar){
         [{texto:'Entendido', accion: ocultarOverlay}]);
       return null;
     }
-    return cargar();
+    return cargar(true);
   })
   .then(function(hecho){
     if(hecho === null) return;
