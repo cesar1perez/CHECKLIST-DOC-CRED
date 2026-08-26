@@ -316,11 +316,7 @@
       <div class="est-pie" id="estPie"></div>
     </div>
 
-    <div style="text-align:center; margin-top:18px">
-      <button class="btn-mini" style="max-width:230px; margin:0 auto" onclick="abrirDiagnostico()">
-        Diagnóstico del sistema
-      </button>
-    </div>
+
   </div>
 
   <!-- ═══ DIAGNÓSTICO ═══ -->
@@ -1599,6 +1595,21 @@ function pintarEstadisticas(){
 function alternarEst(k){
   $('estFila'+k).classList.toggle('abierto');
 }
+
+/* ── Acceso oculto al diagnóstico: 5 toques en el título de la barra ── */
+
+var toquesTitulo = 0, relojToques = null;
+
+$('tituloBarra').addEventListener('click', function(){
+  if(pantallaActual !== 'pInicio') return;   // solo desde la portada
+  toquesTitulo++;
+  clearTimeout(relojToques);
+  relojToques = setTimeout(function(){ toquesTitulo = 0; }, 2500);
+  if(toquesTitulo >= 5){
+    toquesTitulo = 0;
+    abrirDiagnostico();
+  }
+});
 
 /* ── Diagnóstico integrado ─────────────────────────────────────────── */
 
