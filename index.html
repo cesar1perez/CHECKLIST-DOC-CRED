@@ -217,6 +217,13 @@
   .carga-inicial .circulo{border:5px solid var(--azul-claro); border-top-color:var(--azul); animation:girar .8s linear infinite;}
   .btn-reintentar{margin-top:16px; padding:11px 20px; background:var(--azul); color:#fff; border:none;
                   border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;}
+  .fila-admin{display:flex; gap:8px; margin-top:9px;}
+  .btn-admin{flex:1; padding:11px; background:#fff; border:1px solid var(--borde); color:var(--azul);
+             border-radius:9px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit;}
+  .btn-admin.peligro{border-color:var(--rojo); color:var(--rojo);}
+  .btn-admin:active{background:var(--azul-claro);}
+  .btn-admin.peligro:active{background:var(--rojo-suave);}
+
   /* ── Avance por vendedor (compacto para celular) ── */
   .bloque-est{margin-top:24px; border-top:1px solid var(--borde); padding-top:16px;}
   .est-cabecera{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
@@ -411,6 +418,30 @@
     </div>
   </div>
 
+  <!-- ═══ EDITAR REGISTRO (solo supervisor) ═══ -->
+  <div class="pantalla" id="pEditar">
+    <div class="ficha" id="edFicha"></div>
+
+    <label class="campo" for="edNombre">Nombre del cliente</label>
+    <input type="text" id="edNombre" autocomplete="off">
+
+    <label class="campo" for="edVendedor">Vendedor</label>
+    <select id="edVendedor"></select>
+
+    <div class="seccion">Documentación solicitada</div>
+    <div class="req-encabezado">
+      <span class="hueco">Documento</span>
+      <span class="col">Nuevo</span>
+      <span class="col">Actualizar</span>
+    </div>
+    <div id="edLista"></div>
+
+    <div class="pie">
+      <button class="principal morado" onclick="guardarEdicion()">Guardar cambios</button>
+      <div class="mensaje" id="msgEditar"></div>
+    </div>
+  </div>
+
   <!-- ═══ REVISIÓN (supervisor) / LISTA VENDEDOR ═══ -->
   <div class="pantalla" id="pLista">
     <div class="filtros">
@@ -449,6 +480,11 @@
     <div class="pie">
       <button class="principal" id="dGuardar" onclick="guardarDetalle()">Guardar</button>
       <button class="btn-secundario" id="dCerrar" onclick="pedirCierre()" style="display:none">Marcar documentación completa</button>
+      <button class="btn-secundario" id="dReabrir" onclick="reabrir()" style="display:none">Reabrir expediente</button>
+      <div class="fila-admin" id="dAdmin" style="display:none">
+        <button class="btn-admin" onclick="abrirEdicion()">Editar registro</button>
+        <button class="btn-admin peligro" onclick="pedirBorrado()">Eliminar registro</button>
+      </div>
       <div class="mensaje" id="msgDetalle"></div>
     </div>
   </div>
@@ -650,6 +686,7 @@ function mostrarPantalla(id){
     pLista:    [rol === 'SUPERVISOR' ? 'Revisar y validar' : 'Mis clientes',
                 rol === 'SUPERVISOR' ? 'Expedientes asignados' : vendedorActivo],
     pDiag:     ['Diagnóstico', 'Prueba del servidor'],
+    pEditar:   ['Editar registro', asignacionActiva ? asignacionActiva.codigo : ''],
     pDetalle:  [asignacionActiva ? asignacionActiva.nombre : 'Cliente',
                 asignacionActiva ? asignacionActiva.codigo : '']
   };
@@ -1071,8 +1108,10 @@ function construirConceptos(a, esSup, cerrado){
   $('dConceptos').innerHTML = html || '<div class="vacio-lista">Esta asignación no tiene documentos solicitados.</div>';
 
   // Botón de cierre: solo supervisor, solo si no está cerrado
-  var puedeCerrar = rol === 'SUPERVISOR' && !cerrado && cuentaRequeridos(a) > 0;
-  $('dCerrar').style.display = puedeCerrar ? 'block' : 'none';
+  var esSupervisor = rol === 'SUPERVISOR';
+  $('dCerrar').style.display  = (esSupervisor && !cerrado && cuentaRequeridos(a) > 0) ? 'block' : 'none';
+  $('dReabrir').style.display = (esSupervisor && cerrado) ? 'block' : 'none';
+  $('dAdmin').style.display   = (esSupervisor && !cerrado) ? 'flex' : 'none';
 }
 
 function indiceDe(nombre){ return CONCEPTOS.indexOf(nombre); }
@@ -1504,6 +1543,174 @@ function aviso(id, texto, tipo){
   var m = $(id);
   m.textContent = texto;
   m.className = 'mensaje ' + tipo;
+}
+
+/* ── Editar, reabrir y eliminar (solo supervisor) ──────────────────── */
+
+var reqEdit = {};
+
+function abrirEdicion(){
+  var a = asignacionActiva;
+  if(!a) return;
+
+  reqEdit = {};
+  CONCEPTOS.forEach(function(c){ reqEdit[c] = a.req[c] || ''; });
+
+  $('edFicha').innerHTML =
+    '<div class="linea"><span class="etiqueta">Código</span><span class="valor"><strong>' + escapar(a.codigo) + '</strong></span></div>' +
+    '<div class="linea"><span class="etiqueta">Mes</span><span class="valor">' + escapar(nombreMes(a.mes)) + '</span></div>';
+
+  $('edNombre').value = a.nombre;
+  $('edVendedor').innerHTML = vendedores.map(function(v){
+    return '<option value="'+escapar(v)+'"' + (v === a.vendedor ? ' selected' : '') + '>'+escapar(v)+'</option>';
+  }).join('');
+
+  $('edLista').innerHTML = CONCEPTOS.map(function(nombre,i){
+    return '<div class="req" id="edReq'+i+'">' +
+      '<span class="nom">'+escapar(nombre)+'</span>' +
+      '<span class="col"><span class="marca" id="edNuevo'+i+'" onclick="marcarEdit('+i+',\'NUEVO\')">&#10003;</span></span>' +
+      '<span class="col"><span class="marca act" id="edAct'+i+'" onclick="marcarEdit('+i+',\'ACTUALIZAR\')">&#10003;</span></span>' +
+      '</div>';
+  }).join('');
+
+  CONCEPTOS.forEach(function(c,i){
+    $('edNuevo'+i).classList.toggle('on', reqEdit[c] === 'NUEVO');
+    $('edAct'+i).classList.toggle('on', reqEdit[c] === 'ACTUALIZAR');
+    $('edReq'+i).classList.toggle('pedido', !!reqEdit[c]);
+  });
+
+  $('msgEditar').style.display = 'none';
+  irA('pEditar');
+}
+
+function marcarEdit(i, tipo){
+  var nombre = CONCEPTOS[i];
+  reqEdit[nombre] = (reqEdit[nombre] === tipo) ? '' : tipo;
+  $('edNuevo'+i).classList.toggle('on', reqEdit[nombre] === 'NUEVO');
+  $('edAct'+i).classList.toggle('on', reqEdit[nombre] === 'ACTUALIZAR');
+  $('edReq'+i).classList.toggle('pedido', !!reqEdit[nombre]);
+}
+
+function guardarEdicion(){
+  var a = asignacionActiva;
+  if(!a || ocupado) return;
+
+  var nombre = $('edNombre').value.trim();
+  if(!nombre){ aviso('msgEditar','Escribe el nombre del cliente.','error'); return; }
+
+  var pedidos = CONCEPTOS.filter(function(c){ return reqEdit[c]; });
+  if(!pedidos.length){ aviso('msgEditar','Debe quedar al menos un documento solicitado.','error'); return; }
+
+  // Avisar si se va a quitar un documento que ya tenía evidencia
+  var conEvidencia = CONCEPTOS.filter(function(c){
+    return a.req[c] && !reqEdit[c] && a.evidencias[c] && (a.evidencias[c].link || a.evidencias[c].nota);
+  });
+
+  if(conEvidencia.length){
+    mostrarOverlay('mal','Ojo con estos documentos',
+      'Vas a dejar de solicitar: ' + conEvidencia.join(', ') +
+      '. Ya tienen evidencia subida; se conservará en la bitácora pero dejará de contar.',
+      [
+        {texto:'Continuar de todos modos', clase:'rojo', accion: function(){ ocultarOverlay(); aplicarEdicion(nombre, pedidos); }},
+        {texto:'Cancelar', accion: ocultarOverlay}
+      ]);
+    return;
+  }
+
+  aplicarEdicion(nombre, pedidos);
+}
+
+function aplicarEdicion(nombre, pedidos){
+  var a = asignacionActiva;
+  ocupado = true;
+  mostrarOverlay('espera','Guardando cambios', a.nombre);
+
+  enviar({
+    accion:'editarAsignacion', clave: clave, id: a.id,
+    nombre: nombre, vendedor: $('edVendedor').value, req: reqEdit
+  }).then(function(r){
+    if(!r || !r.resultado) throw new Error('El Apps Script respondió sin resultado. Falta reimplementarlo.');
+    return cargar(true);
+  }).then(function(){
+    ocupado = false;
+    asignaciones.forEach(function(x){ if(x.id === a.id) asignacionActiva = x; });
+    prepararEstadisticas();
+    mostrarOverlay('ok','Registro actualizado', nombre + ' — ' + pedidos.length + ' documentos solicitados');
+    setTimeout(function(){
+      ocultarOverlay();
+      historial.pop();
+      abrirDetalle(a.id);
+    }, 1400);
+  }).catch(function(err){
+    ocupado = false;
+    errorVisible('msgEditar', err.message);
+  });
+}
+
+function pedirBorrado(){
+  var a = asignacionActiva;
+  if(!a || ocupado) return;
+
+  mostrarOverlay('mal','¿Eliminar este registro?',
+    'Se borrará la asignación de ' + a.nombre + ' (' + nombreMes(a.mes) + '). ' +
+    'Las fotos y comentarios ya subidos se conservan en la bitácora. Esto no se puede deshacer.',
+    [
+      {texto:'Sí, eliminar', clase:'rojo', accion: borrarRegistro},
+      {texto:'Cancelar', accion: ocultarOverlay}
+    ]);
+}
+
+function borrarRegistro(){
+  var a = asignacionActiva;
+  ocupado = true;
+  mostrarOverlay('espera','Eliminando', a.nombre);
+
+  enviar({accion:'borrarAsignacion', clave: clave, id: a.id})
+  .then(function(r){
+    if(!r || !r.resultado) throw new Error('El Apps Script respondió sin resultado. Falta reimplementarlo.');
+    return cargar(true);
+  }).then(function(){
+    ocupado = false;
+    asignacionActiva = null;
+    prepararEstadisticas();
+    actualizarResumenSupervisor();
+    mostrarOverlay('ok','Registro eliminado', a.nombre);
+    setTimeout(function(){ ocultarOverlay(); volverALista(); }, 1400);
+  }).catch(function(err){
+    ocupado = false;
+    errorVisible('msgDetalle', err.message);
+  });
+}
+
+function reabrir(){
+  var a = asignacionActiva;
+  if(!a || ocupado) return;
+
+  mostrarOverlay('mal','¿Reabrir el expediente?',
+    a.nombre + ' volverá a estar pendiente y el vendedor podrá subir evidencia de nuevo.',
+    [
+      {texto:'Sí, reabrir', clase:'rojo', accion: function(){
+        ocupado = true;
+        mostrarOverlay('espera','Reabriendo', a.nombre);
+        enviar({accion:'reabrirAsignacion', clave: clave, id: a.id})
+        .then(function(){ return cargar(true); })
+        .then(function(){
+          ocupado = false;
+          prepararEstadisticas();
+          actualizarResumenSupervisor();
+          mostrarOverlay('ok','Expediente reabierto', a.nombre);
+          setTimeout(function(){
+            ocultarOverlay();
+            historial.pop();
+            abrirDetalle(a.id);
+          }, 1300);
+        }).catch(function(err){
+          ocupado = false;
+          errorVisible('msgDetalle', err.message);
+        });
+      }},
+      {texto:'Cancelar', accion: ocultarOverlay}
+    ]);
 }
 
 /* ── Avance por vendedor ───────────────────────────────────────────── */
