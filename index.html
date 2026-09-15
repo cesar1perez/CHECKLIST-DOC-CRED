@@ -1089,7 +1089,7 @@ function construirConceptos(a, esSup, cerrado){
           '<label class="btn-foto" for="pdf'+i+'">' +
             '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm2 18H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>' +
             'Documento PDF</label>' +
-          '<input type="file" id="pdf'+i+'" accept="application/pdf" onchange="cargarArchivo('+i+',\'pdf\')">' +
+          '<input type="file" id="pdf'+i+'" accept="application/pdf,.pdf" onchange="cargarArchivo('+i+',\'pdf\')">' +
 
           '<button class="btn-foto" id="btnComentario'+i+'" onclick="mostrarComentario('+i+')">' +
             '<svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>' +
@@ -1171,12 +1171,33 @@ function cargarArchivo(i, origen){
   var etiquetas = { camara:'Foto tomada', foto:archivo.name, pdf:archivo.name };
   $('nombreArchivo'+i).textContent = etiquetas[origen] || archivo.name;
 
+  // Validar en el momento, no hasta que le den guardar
+  if(!esPDF(archivo) && !esImagen(archivo)){
+    limpiarArchivos(i);
+    $('nombreArchivo'+i).textContent = '';
+    errorVisible(null, 'El archivo "' + archivo.name + '" no es una imagen ni un PDF. ' +
+                       'Solo se aceptan fotos (JPG, PNG) y documentos PDF.');
+    return;
+  }
+  if(esPDF(archivo) && archivo.size > 9 * 1024 * 1024){
+    limpiarArchivos(i);
+    $('nombreArchivo'+i).textContent = '';
+    errorVisible(null, 'El PDF pesa ' + (archivo.size/1024/1024).toFixed(1) +
+                       ' MB. El máximo son 9 MB: comprímelo o divídelo.');
+    return;
+  }
+
   var previa = $('previa'+i);
-  if(origen === 'pdf'){
+  if(esPDF(archivo)){
+    // Los PDF no se previsualizan: se muestra el nombre y el peso
     previa.style.display = 'none';
+    previa.src = '';
+    $('nombreArchivo'+i).textContent =
+      'PDF: ' + archivo.name + ' (' + (archivo.size/1024/1024).toFixed(1) + ' MB)';
   }else{
     var lector = new FileReader();
     lector.onload = function(e){ previa.src = e.target.result; previa.style.display = 'block'; };
+    lector.onerror = function(){ previa.style.display = 'none'; };
     lector.readAsDataURL(archivo);
   }
   revisarEvidencia(i);
@@ -1210,6 +1231,27 @@ function alternarBorrado(i){
   }
 }
 
+/* ── Identificación de archivos ────────────────────────────────────── */
+
+/**
+ * El navegador no siempre reporta bien el tipo MIME: desde el explorador de
+ * Android o desde Drive, un PDF puede llegar como "" o "application/octet-stream".
+ * Por eso se revisa también la extensión del nombre.
+ */
+function esPDF(archivo){
+  if(!archivo) return false;
+  var tipo = (archivo.type || '').toLowerCase();
+  if(tipo.indexOf('pdf') !== -1) return true;
+  return /\.pdf$/i.test(archivo.name || '');
+}
+
+function esImagen(archivo){
+  if(!archivo) return false;
+  var tipo = (archivo.type || '').toLowerCase();
+  if(tipo.indexOf('image/') === 0) return true;
+  return /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i.test(archivo.name || '');
+}
+
 /** Lee un archivo tal cual (para PDF, que no se debe comprimir). */
 function leerComoBase64(archivo){
   return new Promise(function(resolver, rechazar){
@@ -1217,23 +1259,50 @@ function leerComoBase64(archivo){
       rechazar(new Error('El PDF pesa más de 9 MB. Comprímelo o divídelo antes de subirlo.'));
       return;
     }
+    var reloj = setTimeout(function(){
+      rechazar(new Error('El documento tardó demasiado en leerse. Intenta con uno más ligero.'));
+    }, 45000);
+
     var lector = new FileReader();
     lector.onload = function(e){
-      resolver({ base64: e.target.result.split(',')[1], tipo: archivo.type || 'application/pdf' });
+      clearTimeout(reloj);
+      var partes = String(e.target.result).split(',');
+      if(partes.length < 2) return rechazar(new Error('El documento llegó vacío.'));
+      resolver({ base64: partes[1], tipo: 'application/pdf' });
     };
-    lector.onerror = function(){ rechazar(new Error('No se pudo leer el documento.')); };
+    lector.onerror = function(){
+      clearTimeout(reloj);
+      rechazar(new Error('No se pudo leer el documento.'));
+    };
     lector.readAsDataURL(archivo);
   });
 }
 
 function comprimirImagen(archivo){
   return new Promise(function(resolver, rechazar){
+    var terminado = false;
+    function fallar(msg){
+      if(terminado) return;
+      terminado = true; clearTimeout(reloj);
+      rechazar(new Error(msg));
+    }
+    function listo(valor){
+      if(terminado) return;
+      terminado = true; clearTimeout(reloj);
+      resolver(valor);
+    }
+
+    // Sin esto, un archivo que no sea imagen deja la promesa colgada para siempre
+    var reloj = setTimeout(function(){
+      fallar('No se pudo procesar el archivo como imagen. Si es un documento, usa el botón "Documento PDF".');
+    }, 30000);
+
     var lector = new FileReader();
     lector.onload = function(e){
       var img = new Image();
       img.onload = function(){
         var maxLado = 1200, w = img.width, h = img.height;
-        if(!w || !h) return rechazar(new Error('Imagen no válida.'));
+        if(!w || !h) return fallar('La imagen no es válida o está dañada.');
         if(Math.max(w,h) > maxLado){
           var f = maxLado/Math.max(w,h);
           w = Math.round(w*f); h = Math.round(h*f);
@@ -1245,12 +1314,12 @@ function comprimirImagen(archivo){
         ctx.drawImage(img, 0, 0, w, h);
         var dataUrl = lienzo.toDataURL('image/jpeg', 0.62);
         if(dataUrl.length > 1400000) dataUrl = lienzo.toDataURL('image/jpeg', 0.42);
-        resolver({ base64: dataUrl.split(',')[1], tipo:'image/jpeg' });
+        listo({ base64: dataUrl.split(',')[1], tipo:'image/jpeg' });
       };
-      img.onerror = function(){ rechazar(new Error('No se pudo procesar la imagen.')); };
+      img.onerror = function(){ fallar('No se pudo procesar la imagen.'); };
       img.src = e.target.result;
     };
-    lector.onerror = function(){ rechazar(new Error('No se pudo leer el archivo.')); };
+    lector.onerror = function(){ fallar('No se pudo leer el archivo.'); };
     lector.readAsDataURL(archivo);
   });
 }
@@ -1296,7 +1365,14 @@ function guardarDetalle(){
 
   conFoto.forEach(function(item, k){
     cadena = cadena.then(function(){
-      var esPdf = item.archivo.type === 'application/pdf';
+      var esPdf = esPDF(item.archivo);
+
+      if(!esPdf && !esImagen(item.archivo)){
+        return Promise.reject(new Error(
+          'El archivo de "' + item.concepto + '" no es una imagen ni un PDF. ' +
+          'Solo se aceptan fotos (JPG, PNG) y documentos PDF.'));
+      }
+
       mostrarOverlay('espera', 'Subiendo ' + (esPdf ? 'documento ' : 'foto ') +
                      (k+1) + ' de ' + conFoto.length, item.concepto);
       var preparar = esPdf ? leerComoBase64(item.archivo) : comprimirImagen(item.archivo);
