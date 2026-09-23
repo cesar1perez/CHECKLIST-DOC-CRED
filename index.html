@@ -268,6 +268,90 @@
   .paso-diag.mal .marca{color:var(--rojo); font-size:11.5px;}
   .paso-diag pre{background:#f4f6f8; border-radius:7px; padding:9px; font-size:11px; overflow:auto;
                  margin:8px 0 0; white-space:pre-wrap; word-break:break-word; max-height:230px;}
+
+  /* ══════════ CARÁTULA IMPRIMIBLE ══════════ */
+  .rep-acciones{display:flex; gap:8px; margin-bottom:16px;}
+  .rep-acciones button{flex:1; padding:12px; border-radius:9px; font-size:14px; font-weight:700;
+                       cursor:pointer; font-family:inherit; border:1px solid var(--borde); background:#fff; color:var(--azul);}
+  .rep-acciones button.principal-rep{background:var(--azul); color:#fff; border-color:var(--azul);}
+
+  .hoja{background:#fff; border:1px solid var(--borde); border-radius:4px; padding:26px 24px;
+        max-width:760px; margin:0 auto; color:#1a2b3a;}
+
+  .hoja-membrete{display:flex; align-items:flex-start; gap:14px; border-bottom:2.5px solid var(--azul); padding-bottom:13px;}
+  .hoja-marca{flex:1; min-width:0;}
+  .hoja-empresa{font-size:17px; font-weight:800; letter-spacing:.5px; color:var(--azul); text-transform:uppercase;}
+  .hoja-area{font-size:10.5px; letter-spacing:1.6px; text-transform:uppercase; color:#7a8794; margin-top:3px;}
+  .hoja-folio{text-align:right; font-size:10px; color:#7a8794; line-height:1.6; flex-shrink:0;}
+  .hoja-folio b{display:block; font-size:11.5px; color:#1a2b3a; letter-spacing:.4px;}
+
+  .hoja-titulo{text-align:center; margin:20px 0 4px; font-size:15.5px; font-weight:800;
+               letter-spacing:.8px; text-transform:uppercase; color:#1a2b3a;}
+  .hoja-subtitulo{text-align:center; font-size:11.5px; color:#7a8794; margin-bottom:20px;}
+
+  .hoja-datos{display:grid; grid-template-columns:1fr 1fr; gap:0 22px; border:1px solid #c9d2da; border-radius:3px; padding:2px 0;}
+  .hoja-dato{display:flex; gap:8px; padding:7px 13px; font-size:12.5px; border-bottom:1px solid #eef1f4; min-width:0;}
+  .hoja-datos .hoja-dato:nth-last-child(-n+2){border-bottom:none;}
+  .hoja-dato .k{font-size:9.5px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+                color:#7a8794; width:74px; flex-shrink:0; padding-top:2px;}
+  .hoja-dato .v{flex:1; font-weight:600; overflow-wrap:anywhere;}
+
+  .hoja-aviso{margin:18px 0 0; padding:10px 13px; border-left:3px solid var(--ambar);
+              background:#fffaf0; font-size:12px; line-height:1.55;}
+  .hoja-aviso.ok{border-left-color:var(--verde); background:#f2f9f3;}
+
+  .hoja-seccion{font-size:10px; font-weight:800; letter-spacing:1.3px; text-transform:uppercase;
+                color:var(--azul); margin:22px 0 8px; padding-bottom:5px; border-bottom:1px solid #c9d2da;}
+
+  table.hoja-tabla{width:100%; border-collapse:collapse; font-size:12.5px;}
+  table.hoja-tabla th{text-align:left; font-size:9.5px; letter-spacing:.7px; text-transform:uppercase;
+                      color:#7a8794; font-weight:700; padding:0 8px 7px; border-bottom:1px solid #c9d2da;}
+  table.hoja-tabla td{padding:9px 8px; border-bottom:1px solid #eef1f4; vertical-align:middle;}
+  table.hoja-tabla tr:last-child td{border-bottom:1px solid #c9d2da;}
+  .col-n{width:26px; color:#98a4b0; font-size:11px; text-align:center;}
+  .col-caja{width:30px; text-align:center;}
+  .cuadro{display:inline-block; width:14px; height:14px; border:1.4px solid #5a6b7a; border-radius:2px;}
+  .cuadro.palomeado{border-color:var(--verde); background:var(--verde); position:relative;}
+  .cuadro.palomeado::after{content:"✓"; position:absolute; inset:0; color:#fff; font-size:11px;
+                           line-height:14px; text-align:center; font-weight:700;}
+  .doc-nombre{font-weight:600;}
+  .tipo{display:inline-block; font-size:9.5px; font-weight:800; letter-spacing:.5px; padding:2px 7px;
+        border-radius:3px; border:1.2px solid; white-space:nowrap;}
+  .tipo.nuevo{color:#4a3184; border-color:#4a3184;}
+  .tipo.actualizar{color:var(--azul-2); border-color:var(--azul-2);}
+  .estado{font-size:11px; font-weight:700; white-space:nowrap;}
+  .estado.pend{color:var(--ambar);}
+  .estado.rev{color:var(--azul-2);}
+  .estado.val{color:var(--verde);}
+
+  .hoja-nota{margin-top:20px; font-size:11px; color:#5a6b7a; line-height:1.6;
+             border:1px solid #eef1f4; background:#fafbfc; border-radius:3px; padding:11px 13px;}
+  .hoja-nota b{color:#1a2b3a;}
+
+  .hoja-firmas{display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-top:46px;}
+  .firma{text-align:center;}
+  .firma .linea-firma{border-top:1px solid #5a6b7a; margin-bottom:6px;}
+  .firma .rol-firma{font-size:9.5px; letter-spacing:.9px; text-transform:uppercase; color:#7a8794; font-weight:700;}
+  .firma .nombre-firma{font-size:11px; margin-top:3px; color:#1a2b3a;}
+
+  .hoja-pie{margin-top:26px; padding-top:9px; border-top:1px solid #eef1f4;
+            font-size:9.5px; color:#98a4b0; display:flex; justify-content:space-between; gap:12px;}
+
+  /* ── Solo se imprime la carátula ── */
+  @media print{
+    @page{ size:A4; margin:13mm; }
+    html,body{background:#fff !important;}
+    body{font-size:12px;}
+    .app{max-width:none; min-height:0; box-shadow:none;}
+    .barra, .pie, .carga-inicial, .overlay, .visor, .rep-acciones{display:none !important;}
+    .pantalla{display:none !important;}
+    #pReporte.activa{display:block !important; padding:0 !important;}
+    .hoja{border:none !important; padding:0 !important; max-width:none !important; border-radius:0 !important;}
+    table.hoja-tabla{page-break-inside:auto;}
+    table.hoja-tabla tr{page-break-inside:avoid;}
+    .hoja-firmas{page-break-inside:avoid;}
+  }
+
   .sugerencias{border:1px solid var(--borde); border-radius:8px; max-height:230px; overflow:auto; margin:-6px 0 13px; display:none;}
   .sugerencias.visible{display:block;}
   .sug{padding:11px 13px; border-bottom:1px solid #eef1f4; cursor:pointer; font-size:14px;}
@@ -322,7 +406,6 @@
       <div id="estLista"></div>
       <div class="est-pie" id="estPie"></div>
     </div>
-
 
   </div>
 
@@ -479,6 +562,7 @@
     <div id="dConceptos"></div>
     <div class="pie">
       <button class="principal" id="dGuardar" onclick="guardarDetalle()">Guardar</button>
+      <button class="btn-secundario" id="dReporte" onclick="abrirReporte()">Carátula para imprimir</button>
       <button class="btn-secundario" id="dCerrar" onclick="pedirCierre()" style="display:none">Marcar documentación completa</button>
       <button class="btn-secundario" id="dReabrir" onclick="reabrir()" style="display:none">Reabrir expediente</button>
       <div class="fila-admin" id="dAdmin" style="display:none">
@@ -487,6 +571,15 @@
       </div>
       <div class="mensaje" id="msgDetalle"></div>
     </div>
+  </div>
+
+  <!-- ═══ CARÁTULA IMPRIMIBLE ═══ -->
+  <div class="pantalla" id="pReporte">
+    <div class="rep-acciones">
+      <button class="principal-rep" onclick="window.print()">Imprimir o guardar PDF</button>
+      <button onclick="atras()">Volver</button>
+    </div>
+    <div id="hojaReporte"></div>
   </div>
 
 </div>
@@ -516,6 +609,11 @@
    CONFIGURACIÓN
    ===================================================================== */
 var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznVrR76WHv2IaxYf64CKav_z8bhTkw8T7XNcG5CtbKFOqay8NIZGw69tpF0F1uWh_Q/exec";
+
+/* Encabezado de la carátula impresa */
+var EMPRESA    = "Grupo Llanterama";
+var AREA       = "Cuentas por Cobrar · Crédito y Cobranza";
+var PIE_HOJA   = "Este documento es un recordatorio interno de la documentación pendiente. No constituye un estado de cuenta.";
 /* ===================================================================== */
 
 var LIMITE_FOTO = 75000, LIMITE_NORMAL = 45000;
@@ -629,7 +727,6 @@ function cargar(silencioso){
     CONCEPTOS = r.datos.conceptos;
     catalogo = r.datos.clientes;
     asignaciones = r.datos.asignaciones;
-    // Blindaje: si alguna fila vieja trae el mes como fecha completa, se normaliza aquí
     asignaciones.forEach(function(a){ a.mes = claveMes(a.mes); });
 
     vendedores = [];
@@ -687,6 +784,7 @@ function mostrarPantalla(id){
                 rol === 'SUPERVISOR' ? 'Expedientes asignados' : vendedorActivo],
     pDiag:     ['Diagnóstico', 'Prueba del servidor'],
     pEditar:   ['Editar registro', asignacionActiva ? asignacionActiva.codigo : ''],
+    pReporte:  ['Carátula', asignacionActiva ? asignacionActiva.nombre : ''],
     pDetalle:  [asignacionActiva ? asignacionActiva.nombre : 'Cliente',
                 asignacionActiva ? asignacionActiva.codigo : '']
   };
@@ -850,12 +948,10 @@ function guardarAlta(){
       return;
     }
 
-    // El alta ya quedó grabada: se confirma de inmediato, sin esperar la recarga
     mostrarOverlay('ok','Cliente dado de alta',
       nombre + ' — ' + pedidos.length + ' documentos solicitados');
     limpiarFormularioAlta();
 
-    // Refrescar en segundo plano; si falla, el alta sigue siendo válida
     cargar(true).then(function(){
       actualizarResumenSupervisor();
       prepararEstadisticas();
@@ -1047,7 +1143,6 @@ function construirConceptos(a, esSup, cerrado){
     var etiqueta = '<span class="etiqueta-req ' + (requerimiento === 'NUEVO' ? 'nuevo' : 'actualizar') + '">' +
                    escapar(requerimiento) + '</span>';
 
-    // La casilla solo la mueve el supervisor
     var caja = esSup && !cerrado
       ? '<div class="caja" onclick="alternarCumplido('+i+')">&#10003;</div>'
       : '<div class="caja bloqueada">&#10003;</div>';
@@ -1060,7 +1155,6 @@ function construirConceptos(a, esSup, cerrado){
       '</div>' +
       '<div class="detalle">';
 
-    // Evidencia ya registrada
     if(ev.nota){
       html += '<div class="nota-guardada"><strong>Comentario:</strong> ' + escapar(ev.nota) +
               (ev.por ? '<br><span style="font-size:11.5px">— ' + escapar(ev.por) +
@@ -1073,7 +1167,6 @@ function construirConceptos(a, esSup, cerrado){
         '</div>';
     }
 
-    // Campos para agregar evidencia nueva
     if(!cerrado){
       html += '<div class="fila-archivo">' +
           '<label class="btn-foto camara" for="camara'+i+'">' +
@@ -1107,7 +1200,6 @@ function construirConceptos(a, esSup, cerrado){
 
   $('dConceptos').innerHTML = html || '<div class="vacio-lista">Esta asignación no tiene documentos solicitados.</div>';
 
-  // Botón de cierre: solo supervisor, solo si no está cerrado
   var esSupervisor = rol === 'SUPERVISOR';
   $('dCerrar').style.display  = (esSupervisor && !cerrado && cuentaRequeridos(a) > 0) ? 'block' : 'none';
   $('dReabrir').style.display = (esSupervisor && cerrado) ? 'block' : 'none';
@@ -1134,6 +1226,129 @@ function actualizarProgresoDetalle(){
   var hechos = document.querySelectorAll('#dConceptos .concepto.completo').length;
   $('dProgreso').textContent = hechos + ' de ' + total;
   $('dBarra').style.width = total ? Math.round(hechos/total*100) + '%' : '0%';
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CARÁTULA IMPRIMIBLE
+   ══════════════════════════════════════════════════════════════════════ */
+
+/** Estado de un documento: 'val' validado, 'rev' entregado sin validar, 'pend' pendiente. */
+function estadoDocumento(a, nombre){
+  if(a.ok[nombre]) return 'val';
+  var ev = a.evidencias[nombre];
+  if(ev && (ev.link || ev.nota)) return 'rev';
+  return 'pend';
+}
+
+function fechaLarga(){
+  var d = new Date();
+  return d.getDate() + ' de ' + MESES[d.getMonth()].toLowerCase() + ' de ' + d.getFullYear();
+}
+
+function abrirReporte(){
+  var a = asignacionActiva;
+  if(!a) return;
+  construirReporte(a);
+  irA('pReporte');
+}
+
+function construirReporte(a){
+  var solicitados = CONCEPTOS.filter(function(c){ return a.req[c]; });
+
+  var pendientes = solicitados.filter(function(c){ return estadoDocumento(a,c) === 'pend'; });
+  var enRevision = solicitados.filter(function(c){ return estadoDocumento(a,c) === 'rev'; });
+  var validados  = solicitados.filter(function(c){ return estadoDocumento(a,c) === 'val'; });
+
+  var etiquetaEstado = { pend:'Pendiente', rev:'Entregado', val:'Validado' };
+
+  var filas = solicitados.map(function(nombre, n){
+    var estado = estadoDocumento(a, nombre);
+    var tipo = a.req[nombre] === 'NUEVO' ? 'nuevo' : 'actualizar';
+    return '<tr>' +
+      '<td class="col-n">' + (n+1) + '</td>' +
+      '<td class="col-caja"><span class="cuadro' + (estado === 'val' ? ' palomeado' : '') + '"></span></td>' +
+      '<td class="doc-nombre">' + escapar(nombre) + '</td>' +
+      '<td><span class="tipo ' + tipo + '">' + escapar(a.req[nombre]) + '</span></td>' +
+      '<td style="text-align:right"><span class="estado ' + estado + '">' +
+        etiquetaEstado[estado] + '</span></td>' +
+    '</tr>';
+  }).join('');
+
+  var aviso;
+  if(!pendientes.length && !enRevision.length){
+    aviso = '<div class="hoja-aviso ok"><b>Documentación completa.</b> ' +
+            'No hay documentos pendientes para este periodo.</div>';
+  }else if(!pendientes.length){
+    aviso = '<div class="hoja-aviso ok"><b>Todo entregado.</b> ' +
+            enRevision.length + ' documento(s) en revisión por cuentas por cobrar.</div>';
+  }else{
+    aviso = '<div class="hoja-aviso"><b>Faltan ' + pendientes.length + ' de ' + solicitados.length +
+            ' documentos.</b> Por favor recabe los marcados como <i>Pendiente</i> en la siguiente lista.</div>';
+  }
+
+  var folio = escapar(a.codigo) + ' · ' + escapar(claveMes(a.mes));
+
+  $('hojaReporte').innerHTML =
+  '<div class="hoja">' +
+
+    '<div class="hoja-membrete">' +
+      '<div class="hoja-marca">' +
+        '<div class="hoja-empresa">' + escapar(EMPRESA) + '</div>' +
+        '<div class="hoja-area">' + escapar(AREA) + '</div>' +
+      '</div>' +
+      '<div class="hoja-folio"><b>Folio ' + folio + '</b>' +
+        'Emitido el ' + escapar(fechaLarga()) + '</div>' +
+    '</div>' +
+
+    '<div class="hoja-titulo">Solicitud de actualización de documentación</div>' +
+    '<div class="hoja-subtitulo">Periodo ' + escapar(nombreMes(a.mes)) + '</div>' +
+
+    '<div class="hoja-datos">' +
+      '<div class="hoja-dato"><span class="k">Cliente</span><span class="v">' + escapar(a.nombre) + '</span></div>' +
+      '<div class="hoja-dato"><span class="k">Código</span><span class="v">' + escapar(a.codigo) + '</span></div>' +
+      '<div class="hoja-dato"><span class="k">Vendedor</span><span class="v">' + escapar(a.vendedor || '—') + '</span></div>' +
+      '<div class="hoja-dato"><span class="k">Avance</span><span class="v">' +
+        validados.length + ' de ' + solicitados.length + ' validados</span></div>' +
+    '</div>' +
+
+    aviso +
+
+    '<div class="hoja-seccion">Documentación requerida</div>' +
+    '<table class="hoja-tabla">' +
+      '<thead><tr>' +
+        '<th class="col-n">#</th><th class="col-caja"></th>' +
+        '<th>Documento</th><th>Requerimiento</th>' +
+        '<th style="text-align:right">Estado</th>' +
+      '</tr></thead>' +
+      '<tbody>' + filas + '</tbody>' +
+    '</table>' +
+
+    '<div class="hoja-nota">' +
+      '<b>Nuevo:</b> el documento no existe en el expediente y debe integrarse por primera vez. &nbsp;·&nbsp; ' +
+      '<b>Actualizar:</b> el documento existe pero está vencido o desactualizado.<br>' +
+      'Los documentos pueden entregarse en original, copia o enviarse en fotografía o PDF a través de la ' +
+      'aplicación de Cuentas por Cobrar.' +
+    '</div>' +
+
+    '<div class="hoja-firmas">' +
+      '<div class="firma">' +
+        '<div class="linea-firma"></div>' +
+        '<div class="rol-firma">Recibió el cliente</div>' +
+        '<div class="nombre-firma">' + escapar(a.nombre) + '</div>' +
+      '</div>' +
+      '<div class="firma">' +
+        '<div class="linea-firma"></div>' +
+        '<div class="rol-firma">Entregó el vendedor</div>' +
+        '<div class="nombre-firma">' + escapar(a.vendedor || '') + '</div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="hoja-pie">' +
+      '<span>' + escapar(EMPRESA) + ' · ' + escapar(nombreMes(a.mes)) + '</span>' +
+      '<span>' + escapar(PIE_HOJA) + '</span>' +
+    '</div>' +
+
+  '</div>';
 }
 
 /* ── Evidencia ─────────────────────────────────────────────────────── */
@@ -1165,13 +1380,11 @@ function cargarArchivo(i, origen){
   var archivo = campo.files[0];
   if(!archivo) return;
 
-  // Solo un archivo por concepto: limpia las otras fuentes
   FUENTES.forEach(function(f){ if(f !== origen && $(f+i)) $(f+i).value = ''; });
 
   var etiquetas = { camara:'Foto tomada', foto:archivo.name, pdf:archivo.name };
   $('nombreArchivo'+i).textContent = etiquetas[origen] || archivo.name;
 
-  // Validar en el momento, no hasta que le den guardar
   if(!esPDF(archivo) && !esImagen(archivo)){
     limpiarArchivos(i);
     $('nombreArchivo'+i).textContent = '';
@@ -1189,7 +1402,6 @@ function cargarArchivo(i, origen){
 
   var previa = $('previa'+i);
   if(esPDF(archivo)){
-    // Los PDF no se previsualizan: se muestra el nombre y el peso
     previa.style.display = 'none';
     previa.src = '';
     $('nombreArchivo'+i).textContent =
@@ -1233,11 +1445,6 @@ function alternarBorrado(i){
 
 /* ── Identificación de archivos ────────────────────────────────────── */
 
-/**
- * El navegador no siempre reporta bien el tipo MIME: desde el explorador de
- * Android o desde Drive, un PDF puede llegar como "" o "application/octet-stream".
- * Por eso se revisa también la extensión del nombre.
- */
 function esPDF(archivo){
   if(!archivo) return false;
   var tipo = (archivo.type || '').toLowerCase();
@@ -1252,7 +1459,6 @@ function esImagen(archivo){
   return /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i.test(archivo.name || '');
 }
 
-/** Lee un archivo tal cual (para PDF, que no se debe comprimir). */
 function leerComoBase64(archivo){
   return new Promise(function(resolver, rechazar){
     if(archivo.size > 9 * 1024 * 1024){
@@ -1292,7 +1498,6 @@ function comprimirImagen(archivo){
       resolver(valor);
     }
 
-    // Sin esto, un archivo que no sea imagen deja la promesa colgada para siempre
     var reloj = setTimeout(function(){
       fallar('No se pudo procesar el archivo como imagen. Si es un documento, usa el botón "Documento PDF".');
     }, 30000);
@@ -1344,7 +1549,6 @@ function guardarDetalle(){
   $('dGuardar').disabled = true;
   $('msgDetalle').style.display = 'none';
 
-  // Recolectar por concepto solicitado
   var items = [];
   Array.prototype.forEach.call(document.querySelectorAll('#dConceptos .concepto'), function(el){
     var nombre = el.getAttribute('data-concepto');
@@ -1391,6 +1595,7 @@ function guardarDetalle(){
   });
 
   // 1) Evidencias (comentarios, fotos, borrados)
+  var ignorados = [];
   cadena = cadena.then(function(){
     var conEvidencia = items.filter(function(x){ return x.nota || x.link || x.borrar; });
     if(!conEvidencia.length) return null;
@@ -1401,6 +1606,9 @@ function guardarDetalle(){
       items: conEvidencia.map(function(x){
         return { concepto:x.concepto, nota:x.nota, link:x.link, borrar:x.borrar };
       })
+    }).then(function(r){
+      if(r && r.resultado && r.resultado.ignorados) ignorados = r.resultado.ignorados;
+      return r;
     });
   });
 
@@ -1420,6 +1628,13 @@ function guardarDetalle(){
     $('dGuardar').disabled = false;
     asignaciones.forEach(function(x){ if(x.id === a.id) asignacionActiva = x; });
     prepararEstadisticas();
+
+    if(ignorados.length){
+      mostrarOverlay('mal','Algo no se guardó',
+        ignorados.map(function(x){ return x.concepto + ': ' + x.motivo; }).join('  |  '),
+        [{texto:'Entendido', accion: function(){ ocultarOverlay(); volverALista(); }}]);
+      return;
+    }
 
     mostrarOverlay('ok','Guardado',
       rol === 'SUPERVISOR' ? 'Validación actualizada' : 'Evidencia enviada al supervisor');
@@ -1463,7 +1678,6 @@ function cerrarExpediente(forzar){
   ocupado = true;
   mostrarOverlay('espera','Cerrando expediente', a.nombre);
 
-  // Primero guarda la validación actual, luego cierra
   var cumplidos = {};
   Array.prototype.forEach.call(document.querySelectorAll('#dConceptos .concepto'), function(el){
     cumplidos[el.getAttribute('data-concepto')] = el.classList.contains('completo');
@@ -1677,7 +1891,6 @@ function guardarEdicion(){
   var pedidos = CONCEPTOS.filter(function(c){ return reqEdit[c]; });
   if(!pedidos.length){ aviso('msgEditar','Debe quedar al menos un documento solicitado.','error'); return; }
 
-  // Avisar si se va a quitar un documento que ya tenía evidencia
   var conEvidencia = CONCEPTOS.filter(function(c){
     return a.req[c] && !reqEdit[c] && a.evidencias[c] && (a.evidencias[c].link || a.evidencias[c].nota);
   });
@@ -1824,7 +2037,6 @@ function pintarEstadisticas(){
     return;
   }
 
-  // Agrupar por vendedor
   var porVendedor = {};
   delMes.forEach(function(a){
     var v = a.vendedor || 'Sin vendedor';
@@ -1884,7 +2096,7 @@ function alternarEst(k){
 var toquesTitulo = 0, relojToques = null;
 
 $('tituloBarra').addEventListener('click', function(){
-  if(pantallaActual !== 'pInicio') return;   // solo desde la portada
+  if(pantallaActual !== 'pInicio') return;
   toquesTitulo++;
   clearTimeout(relojToques);
   relojToques = setTimeout(function(){ toquesTitulo = 0; }, 2500);
