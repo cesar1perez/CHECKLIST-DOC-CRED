@@ -92,6 +92,11 @@
   .sello.pendiente{background:var(--ambar-suave); color:var(--ambar);}
 
   .progreso-fila{display:flex; align-items:center; gap:10px; margin-bottom:14px; font-size:13px; color:var(--tenue);}
+  .estado-val{font-size:11.5px; font-weight:700; white-space:nowrap; flex-shrink:0; opacity:0; transition:opacity .2s;}
+  .estado-val.visible{opacity:1;}
+  .estado-val.guardando{color:var(--azul-2);}
+  .estado-val.ok{color:var(--verde);}
+  .estado-val.mal{color:var(--rojo);}
   .barra-p{flex:1; height:8px; background:#dfe5eb; border-radius:4px; overflow:hidden;}
   .barra-p div{height:100%; width:0%; background:var(--verde); transition:width .25s;}
 
@@ -554,6 +559,7 @@
     <div class="progreso-fila">
       <span id="dProgreso">0 de 0</span>
       <div class="barra-p"><div id="dBarra"></div></div>
+      <span class="estado-val" id="dEstadoVal"></span>
     </div>
     <div class="acciones-rapidas" id="dAcciones" style="display:none">
       <button class="btn-mini" onclick="marcarTodos(true)">Palomear todos</button>
@@ -1131,12 +1137,17 @@ function abrirDetalle(id){
 
   $('dAcciones').style.display = (esSup && !cerrado) ? 'flex' : 'none';
   if(esSup && !cerrado){
-    aviso('msgDetalle', 'Al validar los ' + cuentaRequeridos(a) +
-          ' documentos y guardar, el expediente se cierra solo.', 'aviso');
+    aviso('msgDetalle', 'Cada documento se guarda al tocarlo. Cuando estén los ' +
+          cuentaRequeridos(a) + ', el expediente se cierra solo.', 'aviso');
+  }else{
+    $('msgDetalle').style.display = 'none';
   }
-  $('dGuardar').style.display = cerrado ? 'none' : 'block';
-  $('dGuardar').textContent = esSup ? 'Guardar validación' : 'Guardar evidencia';
+
+  // El supervisor valida tocando; el botón solo aparece si adjuntó algo que subir.
+  $('dGuardar').textContent = esSup ? 'Subir comentarios y fotos' : 'Guardar evidencia';
   $('dGuardar').className = 'principal' + (esSup ? ' morado' : '');
+  $('dGuardar').style.display = (!cerrado && !esSup) ? 'block' : 'none';
+  estadoValidacion('', '');
   $('msgDetalle').style.display = 'none';
 
   construirConceptos(a, esSup, cerrado);
@@ -1225,16 +1236,112 @@ function construirConceptos(a, esSup, cerrado){
 function indiceDe(nombre){ return CONCEPTOS.indexOf(nombre); }
 
 function alternarCumplido(i){
+  if($('concepto'+i).getAttribute('data-bloqueado') === '1') return;
   $('concepto'+i).classList.toggle('completo');
   actualizarProgresoDetalle();
+  programarValidacion();
+}
+
+/* ── Guardado automático de la validación ──────────────────────────── */
+
+var relojValidacion = null, validacionEnVuelo = false, validacionPendiente = false;
+
+function estadoValidacion(texto, clase){
+  var el = $('dEstadoVal');
+  if(!el) return;
+  el.textContent = texto || '';
+  el.className = 'estado-val' + (texto ? ' visible ' + (clase||'') : '');
+}
+
+/** Espera un momento para agrupar varios toques seguidos en un solo guardado. */
+function programarValidacion(){
+  if(rol !== 'SUPERVISOR' || !asignacionActiva) return;
+  estadoValidacion('Guardando...', 'guardando');
+  clearTimeout(relojValidacion);
+  relojValidacion = setTimeout(enviarValidacion, 700);
+}
+
+function enviarValidacion(){
+  if(rol !== 'SUPERVISOR' || !asignacionActiva) return;
+
+  // Si ya hay una petición en curso, se encola una más al terminar
+  if(validacionEnVuelo){ validacionPendiente = true; return; }
+
+  var a = asignacionActiva;
+  var cumplidos = {};
+  Array.prototype.forEach.call(document.querySelectorAll('#dConceptos .concepto'), function(el){
+    cumplidos[el.getAttribute('data-concepto')] = el.classList.contains('completo');
+  });
+
+  validacionEnVuelo = true;
+  estadoValidacion('Guardando...', 'guardando');
+
+  enviar({ accion:'marcarCumplidos', clave: clave, id: a.id, cumplidos: cumplidos })
+  .then(function(r){
+    validacionEnVuelo = false;
+    var res = (r && r.resultado) || {};
+
+    // Reflejar el nuevo estado en memoria, sin recargar todo
+    a.ok = {};
+    Object.keys(cumplidos).forEach(function(k){ a.ok[k] = cumplidos[k]; });
+    if(res.cerradoAuto)  a.estatus = 'COMPLETO';
+    if(res.reabiertoAuto) a.estatus = 'PENDIENTE';
+
+    if(validacionPendiente){ validacionPendiente = false; enviarValidacion(); return; }
+
+    if(res.cerradoAuto){
+      estadoValidacion('', '');
+      bloquearDetalle();
+      mostrarOverlay('ok','Documentación completa',
+        a.nombre + ' quedó actualizado: ' + res.cumplidos + ' de ' + res.requeridos + ' validados.');
+      setTimeout(function(){
+        ocultarOverlay();
+        actualizarResumenSupervisor();
+        prepararEstadisticas();
+        volverALista();
+      }, 1800);
+      return;
+    }
+
+    if(res.reabiertoAuto){
+      estadoValidacion('Reabierto', 'mal');
+      actualizarResumenSupervisor();
+      prepararEstadisticas();
+      return;
+    }
+
+    estadoValidacion('Guardado', 'ok');
+    setTimeout(function(){ estadoValidacion('', ''); }, 2000);
+  })
+  .catch(function(err){
+    validacionEnVuelo = false;
+    validacionPendiente = false;
+    estadoValidacion('No se guardó', 'mal');
+    errorVisible(null, 'No se pudo guardar la validación: ' + err.message +
+                       ' Vuelve a tocar la casilla para reintentar.');
+  });
+}
+
+/** Tras cerrarse el expediente, las casillas dejan de responder. */
+function bloquearDetalle(){
+  Array.prototype.forEach.call(document.querySelectorAll('#dConceptos .concepto'), function(el){
+    el.setAttribute('data-bloqueado', '1');
+    var caja = el.querySelector('.caja');
+    if(caja) caja.classList.add('bloqueada');
+  });
+  $('dAcciones').style.display = 'none';
+  $('dGuardar').style.display = 'none';
+  $('dCerrar').style.display = 'none';
 }
 function alternarDetalle(i){ $('concepto'+i).classList.toggle('abierto'); }
 
 function marcarTodos(v){
   Array.prototype.forEach.call(document.querySelectorAll('#dConceptos .concepto'), function(el){
+    if(el.getAttribute('data-bloqueado') === '1') return;
     el.classList.toggle('completo', v);
   });
   actualizarProgresoDetalle();
+  programarValidacion();
 }
 
 function actualizarProgresoDetalle(){
@@ -1438,12 +1545,27 @@ function quitarAdjunto(i){
   if($('nota'+i)){ $('nota'+i).value = ''; $('nota'+i).style.display = 'none'; }
   if($('btnComentario'+i)) $('btnComentario'+i).style.display = 'inline-flex';
   $('btnQuitar'+i).style.display = 'none';
+  actualizarBotonGuardar();
 }
 
 function revisarEvidencia(i){
   var hay = ($('nota'+i) && $('nota'+i).value.trim()) || archivoDe(i);
   if($('btnQuitar'+i)) $('btnQuitar'+i).style.display = hay ? 'inline-block' : 'none';
   if(hay) $('btnEv'+i).classList.add('tiene');
+  actualizarBotonGuardar();
+}
+
+/** Para el supervisor, el botón de guardar solo existe si hay algo que subir. */
+function actualizarBotonGuardar(){
+  if(rol !== 'SUPERVISOR' || !asignacionActiva) return;
+  if(asignacionActiva.estatus === 'COMPLETO'){ $('dGuardar').style.display = 'none'; return; }
+
+  var pendiente = false;
+  Array.prototype.forEach.call(document.querySelectorAll('#dConceptos .concepto'), function(el){
+    var i = indiceDe(el.getAttribute('data-concepto'));
+    if(($('nota'+i) && $('nota'+i).value.trim()) || archivoDe(i) || borrados[i]) pendiente = true;
+  });
+  $('dGuardar').style.display = pendiente ? 'block' : 'none';
 }
 
 function alternarBorrado(i){
@@ -1457,6 +1579,7 @@ function alternarBorrado(i){
     caja.classList.add('borrada');
     boton.textContent = 'Deshacer'; boton.classList.add('deshacer');
   }
+  actualizarBotonGuardar();
 }
 
 /* ── Identificación de archivos ────────────────────────────────────── */
@@ -1673,16 +1796,9 @@ function guardarDetalle(){
     });
   });
 
-  // 2) Validación (solo supervisor)
+  // La validación del supervisor ya se guarda sola al tocar cada casilla,
+  // así que aquí solo viajan los comentarios y archivos.
   var validacion = null;
-  cadena = cadena.then(function(){
-    if(rol !== 'SUPERVISOR') return null;
-    mostrarOverlay('espera', 'Guardando validación', a.nombre);
-    var cumplidos = {};
-    items.forEach(function(x){ cumplidos[x.concepto] = x.cumplido; });
-    return enviar({ accion:'marcarCumplidos', clave: clave, id: a.id, cumplidos: cumplidos })
-      .then(function(r){ validacion = (r && r.resultado) || null; return r; });
-  });
 
   cadena.then(function(){
     return cargar(true);
