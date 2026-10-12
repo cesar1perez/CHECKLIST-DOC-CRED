@@ -563,7 +563,7 @@
     <div class="pie">
       <button class="principal" id="dGuardar" onclick="guardarDetalle()">Guardar</button>
       <button class="btn-secundario" id="dReporte" onclick="abrirReporte()">Carátula para imprimir</button>
-      <button class="btn-secundario" id="dCerrar" onclick="pedirCierre()" style="display:none">Marcar documentación completa</button>
+      <button class="btn-secundario" id="dCerrar" onclick="pedirCierre()" style="display:none">Cerrar aunque falten documentos</button>
       <button class="btn-secundario" id="dReabrir" onclick="reabrir()" style="display:none">Reabrir expediente</button>
       <div class="fila-admin" id="dAdmin" style="display:none">
         <button class="btn-admin" onclick="abrirEdicion()">Editar registro</button>
@@ -1005,6 +1005,14 @@ function prepararLista(){
   }
   $('btnCambiarVendedor').style.display = (rol === 'VENDEDOR') ? 'block' : 'none';
 
+  // El filtro por estatus NO se conserva entre visitas: si alguien tocó
+  // "Pendientes" y luego se cerró un expediente, el cliente parecería
+  // haber desaparecido de su lista.
+  $('fMes').setAttribute('data-estatus', 'todos');
+  Array.prototype.forEach.call(document.querySelectorAll('#pLista .tarjeta'), function(t){
+    t.classList.remove('activa');
+  });
+
   $('fBusqueda').value = '';
   pintarLista();
 }
@@ -1059,7 +1067,8 @@ function pintarLista(){
 
   if(!lista.length){
     $('listaAsignaciones').innerHTML = '<div class="vacio-lista">' +
-      (base.length ? 'No hay clientes con esos filtros.'
+      (base.length ? 'Ninguno de tus ' + base.length + ' clientes de este periodo coincide con el filtro.' +
+                     '<br>Toca la tarjeta <b>Clientes</b> de arriba para ver todos.'
                    : (rol === 'SUPERVISOR'
                       ? 'Todavía no hay clientes dados de alta para este periodo.'
                       : 'No tienes clientes asignados en este periodo.<br>El supervisor de cuentas es quien los asigna.')) +
@@ -1121,6 +1130,10 @@ function abrirDetalle(id){
       escapar(a.fechaCompletado)+(a.cerradoPor?' · '+escapar(a.cerradoPor):'')+'</span></div>' : '');
 
   $('dAcciones').style.display = (esSup && !cerrado) ? 'flex' : 'none';
+  if(esSup && !cerrado){
+    aviso('msgDetalle', 'Al validar los ' + cuentaRequeridos(a) +
+          ' documentos y guardar, el expediente se cierra solo.', 'aviso');
+  }
   $('dGuardar').style.display = cerrado ? 'none' : 'block';
   $('dGuardar').textContent = esSup ? 'Guardar validación' : 'Guardar evidencia';
   $('dGuardar').className = 'principal' + (esSup ? ' morado' : '');
@@ -1201,7 +1214,10 @@ function construirConceptos(a, esSup, cerrado){
   $('dConceptos').innerHTML = html || '<div class="vacio-lista">Esta asignación no tiene documentos solicitados.</div>';
 
   var esSupervisor = rol === 'SUPERVISOR';
-  $('dCerrar').style.display  = (esSupervisor && !cerrado && cuentaRequeridos(a) > 0) ? 'block' : 'none';
+  // Con cierre automático, el botón manual solo sirve para cerrar un expediente
+  // al que todavía le faltan documentos (una excepción, no el camino normal).
+  var faltanPorValidar = cuentaRequeridos(a) > cuentaCumplidos(a);
+  $('dCerrar').style.display  = (esSupervisor && !cerrado && faltanPorValidar) ? 'block' : 'none';
   $('dReabrir').style.display = (esSupervisor && cerrado) ? 'block' : 'none';
   $('dAdmin').style.display   = (esSupervisor && !cerrado) ? 'flex' : 'none';
 }
@@ -1658,12 +1674,14 @@ function guardarDetalle(){
   });
 
   // 2) Validación (solo supervisor)
+  var validacion = null;
   cadena = cadena.then(function(){
     if(rol !== 'SUPERVISOR') return null;
     mostrarOverlay('espera', 'Guardando validación', a.nombre);
     var cumplidos = {};
     items.forEach(function(x){ cumplidos[x.concepto] = x.cumplido; });
-    return enviar({ accion:'marcarCumplidos', clave: clave, id: a.id, cumplidos: cumplidos });
+    return enviar({ accion:'marcarCumplidos', clave: clave, id: a.id, cumplidos: cumplidos })
+      .then(function(r){ validacion = (r && r.resultado) || null; return r; });
   });
 
   cadena.then(function(){
@@ -1681,12 +1699,28 @@ function guardarDetalle(){
       return;
     }
 
-    mostrarOverlay('ok','Guardado',
-      rol === 'SUPERVISOR' ? 'Validación actualizada' : 'Evidencia enviada al supervisor');
+    var titulo = 'Guardado';
+    var detalle = rol === 'SUPERVISOR' ? 'Validación actualizada' : 'Evidencia enviada al supervisor';
+    var espera = 1400;
+
+    if(validacion && validacion.cerradoAuto){
+      titulo = 'Documentación completa';
+      detalle = a.nombre + ' quedó actualizado: ' +
+                validacion.cumplidos + ' de ' + validacion.requeridos + ' documentos validados.';
+      espera = 2000;
+    }else if(validacion && validacion.reabiertoAuto){
+      titulo = 'Expediente reabierto';
+      detalle = 'Quitaste una validación, así que ' + a.nombre +
+                ' volvió a estar pendiente y el vendedor puede subir evidencia otra vez.';
+      espera = 2400;
+    }
+
+    mostrarOverlay('ok', titulo, detalle);
     setTimeout(function(){
       ocultarOverlay();
       volverALista();
-    }, 1400);
+      actualizarResumenSupervisor();
+    }, espera);
   }).catch(function(err){
     ocupado = false;
     $('dGuardar').disabled = false;
@@ -1703,15 +1737,9 @@ function pedirCierre(){
   var total = document.querySelectorAll('#dConceptos .concepto').length;
   var hechos = document.querySelectorAll('#dConceptos .concepto.completo').length;
 
-  if(hechos < total){
-    mostrarOverlay('mal','Faltan documentos',
-      'Tienes ' + hechos + ' de ' + total + ' validados. Guarda primero la validación o palomea los que falten.',
-      [{texto:'Entendido', accion: ocultarOverlay}]);
-    return;
-  }
-
-  mostrarOverlay('mal','¿Cerrar expediente?',
-    'Vas a marcar a ' + a.nombre + ' como documentación completa. El vendedor ya no podrá subir evidencia.',
+  mostrarOverlay('mal','¿Cerrar con documentos faltantes?',
+    'Vas a marcar a ' + a.nombre + ' como documentación completa aunque solo tiene ' +
+    hechos + ' de ' + total + ' validados. El vendedor ya no podrá subir evidencia.',
     [
       {texto:'Sí, marcar como completa', clase:'rojo', accion: function(){ cerrarExpediente(true); }},
       {texto:'Cancelar', accion: ocultarOverlay}
