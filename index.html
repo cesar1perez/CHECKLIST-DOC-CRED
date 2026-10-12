@@ -1459,28 +1459,68 @@ function esImagen(archivo){
   return /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i.test(archivo.name || '');
 }
 
+/** Convierte bytes a base64 por bloques (sin reventar la pila con archivos grandes). */
+function bytesABase64(buffer){
+  var bytes = new Uint8Array(buffer);
+  var trozo = 0x8000, partes = [];
+  for(var i = 0; i < bytes.length; i += trozo){
+    partes.push(String.fromCharCode.apply(null, bytes.subarray(i, i + trozo)));
+  }
+  return btoa(partes.join(''));
+}
+
+/**
+ * Lee un PDF tal cual, sin comprimir.
+ *
+ * Se leen los BYTES directamente en vez de usar readAsDataURL: en Windows, un
+ * archivo que vive en OneDrive o en una carpeta sincronizada sin descargar
+ * devolvía una cadena vacía, y el documento llegaba en blanco al servidor.
+ * Así además podemos verificar que realmente se leyó algo.
+ */
 function leerComoBase64(archivo){
   return new Promise(function(resolver, rechazar){
-    if(archivo.size > 9 * 1024 * 1024){
-      rechazar(new Error('El PDF pesa más de 9 MB. Comprímelo o divídelo antes de subirlo.'));
+    if(archivo.size === 0){
+      rechazar(new Error('El archivo "' + archivo.name + '" está vacío (0 bytes). ' +
+        'Si está guardado en OneDrive o en una carpeta sincronizada, ábrelo primero ' +
+        'para que se descargue a la computadora, y vuelve a intentarlo.'));
       return;
     }
+    if(archivo.size > 9 * 1024 * 1024){
+      rechazar(new Error('El PDF pesa ' + (archivo.size/1024/1024).toFixed(1) +
+        ' MB. El máximo son 9 MB: comprímelo o divídelo antes de subirlo.'));
+      return;
+    }
+
+    var terminado = false;
+    function fallar(msg){ if(terminado) return; terminado = true; clearTimeout(reloj); rechazar(new Error(msg)); }
+    function listo(v){ if(terminado) return; terminado = true; clearTimeout(reloj); resolver(v); }
+
     var reloj = setTimeout(function(){
-      rechazar(new Error('El documento tardó demasiado en leerse. Intenta con uno más ligero.'));
+      fallar('El documento tardó demasiado en leerse. ' +
+             'Si está en OneDrive o Google Drive, cópialo al Escritorio y vuelve a intentarlo.');
     }, 45000);
 
     var lector = new FileReader();
     lector.onload = function(e){
-      clearTimeout(reloj);
-      var partes = String(e.target.result).split(',');
-      if(partes.length < 2) return rechazar(new Error('El documento llegó vacío.'));
-      resolver({ base64: partes[1], tipo: 'application/pdf' });
+      try{
+        var buffer = e.target.result;
+        if(!buffer || !buffer.byteLength){
+          return fallar('El archivo "' + archivo.name + '" se leyó vacío. ' +
+            'Suele pasar con archivos en OneDrive o en una carpeta sincronizada que ' +
+            'todavía no se descarga. Ábrelo una vez, o cópialo al Escritorio, e inténtalo de nuevo.');
+        }
+        var base64 = bytesABase64(buffer);
+        if(!base64) return fallar('No se pudo preparar el documento para enviarlo.');
+        listo({ base64: base64, tipo: 'application/pdf', bytes: buffer.byteLength });
+      }catch(err){
+        fallar('No se pudo procesar el documento: ' + err.message);
+      }
     };
     lector.onerror = function(){
-      clearTimeout(reloj);
-      rechazar(new Error('No se pudo leer el documento.'));
+      fallar('No se pudo leer "' + archivo.name + '". ' +
+             'Verifica que el archivo exista y no esté abierto en otro programa.');
     };
-    lector.readAsDataURL(archivo);
+    lector.readAsArrayBuffer(archivo);
   });
 }
 
@@ -1581,6 +1621,11 @@ function guardarDetalle(){
                      (k+1) + ' de ' + conFoto.length, item.concepto);
       var preparar = esPdf ? leerComoBase64(item.archivo) : comprimirImagen(item.archivo);
       return preparar.then(function(comp){
+        // Último candado: si por lo que sea el contenido quedó vacío, no se envía
+        if(!comp || !comp.base64){
+          throw new Error('El archivo de "' + item.concepto + '" quedó vacío al prepararlo. ' +
+                          'Vuelve a seleccionarlo e inténtalo de nuevo.');
+        }
         return subirConReintento({
           accion:'foto', codigo:a.codigo, nombre:a.nombre, concepto:item.concepto,
           fotoBase64:comp.base64, fotoTipo:comp.tipo,
